@@ -34,6 +34,10 @@ function title(html memory _html, string memory _title) pure returns (html memor
     return _html.appendHead(el("title", _title));
 }
 
+function meta(html memory _html, string memory _meta) pure returns (html memory) {
+    return _html.appendHead(el("title", _meta));
+}
+
 function style(html memory _html, string memory _style) pure returns (html memory) {
     return _html.appendHead(el("style", _style));
 }
@@ -147,6 +151,7 @@ using {read, appendHead, prependHead, appendBody, prependBody} for html global;
 
 using {
     title,
+    meta,
     style,
     div,
     div_,
