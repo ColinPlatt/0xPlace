@@ -14,19 +14,23 @@ function read(html memory _html) pure returns (string memory) {
 }
 
 function appendHead(html memory _html, string memory _head) pure returns (html memory) {
-    return html(LibString.concat(_html.head, _head), _html.body);
+    _html.head = LibString.concat(_html.head, _head);
+    return _html;
 }
 
 function prependHead(html memory _html, string memory _head) pure returns (html memory) {
-    return html(LibString.concat(_head, _html.head), _html.body);
+    _html.head = LibString.concat(_head, _html.head);
+    return _html;
 }
 
 function appendBody(html memory _html, string memory _body) pure returns (html memory) {
-    return html(_html.head, LibString.concat(_html.body, _body));
+    _html.body = LibString.concat(_html.body, _body);
+    return _html;
 }
 
 function prependBody(html memory _html, string memory _body) pure returns (html memory) {
-    return html(_html.head, LibString.concat(_body, _html.body));
+    _html.body = LibString.concat(_body, _html.body);
+    return _html;
 }
 
 /* MAIN ELEMENTS */

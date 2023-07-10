@@ -110,12 +110,13 @@ contract zeroxPlace is IURIProvider, Ownable {
 
     function draw(uint256[] memory indexes, uint8[] memory colors) public {
         if (indexes.length != colors.length) revert UNBALANCE_ARRAY();
-        if (index > MAX_PIXELS) revert OUT_OF_BOUNDS();
+        
 
-        uint len = xindexes.length;
+        uint len = indexes.length;
 
         unchecked{
             for (uint256 i = 0; i < len; i++) {
+                if (indexes[i] > MAX_PIXELS) revert OUT_OF_BOUNDS();
                 if (colors[i] > 215) revert INVALID_COLOR();
                 token.transferFrom(msg.sender, pixelOwner[indexes[i]], 1e18); // transfer 1 PLACE token to the current owner of the pixel
                 pixelOwner[indexes[i]] = msg.sender; // set msg.sender as the new owner of the pixel
