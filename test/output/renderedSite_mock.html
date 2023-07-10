@@ -4,23 +4,23 @@
         <title>Pixel Art</title>
         <style>
             body {
-                background: rgb(15, 19, 22);
+                background: #0f1316;
                 color: white;
-                padding: 2rem;
+                padding: 0.25rem 1rem;
                 font-family: 'Courier New', Courier, monospace;
             }
 
             input {
                 background: transparent;
+                width: 5rem;
+                margin: 1rem 1rem 0;
             }
 
             button {
                 height: 2.25rem;
-                list-style: circle;
                 cursor: pointer;
-                float: left;
-                background: linear-gradient(45deg, #027cfd, #027cfd);
-                font-family: Inter, sans-serif;
+                background: #027cfd;
+                font-family: 'Courier New', Courier, monospace;
                 padding: 0.25rem 1rem;
                 border-radius: 7px;
                 width: auto;
@@ -28,7 +28,7 @@
                 text-decoration: none;
                 font-variation-settings: 'wght' 800;
                 border: none;
-                margin: 1rem 0 0;
+                margin: 1rem 1rem 0;
                 box-shadow: 0 2px 20px #000000c4;
                 font-size: 1rem;
                 letter-spacing: 0.5px;
@@ -37,25 +37,14 @@
             #pixel-art-area {
                 display: flex;
                 flex-direction: row;
-                flex-flow: wrap;
+                flex-wrap: wrap;
                 overflow: hidden;
                 border-radius: 4px;
-                padding: 2px 0 2px 2px;
+                padding: 0.05px;
             }
 
             #pixel-art-area input {
                 background: #101316;
-            }
-
-            #pixel-art-area .pixel {
-                width: 0.825rem;
-                margin: 0 3px 3px 0;
-                height: 0.825rem;
-                cursor: pointer;
-                user-select: none;
-                -webkit-user-select: none;
-                border-radius: 3px;
-                background: #191f2b;
             }
 
             input[type="color"] {
@@ -63,25 +52,8 @@
                 padding: 0;
                 background: transparent !important;
                 border-radius: 10px;
-                height: 1.75rem;
                 position: relative;
                 border: none;
-                cursor: pointer;
-            }
-
-            #pixel-art-options {
-                display: flex;
-            }
-
-            #pixel-art-area .pixel:hover {
-                background: #6366914a;
-                transform: scale(1.25);
-                cursor: pointer;
-            }
-
-            #pixel-art-area .pixel:active {
-                background: #6366914a;
-                transform: scale(1.25);
                 cursor: pointer;
             }
 
@@ -93,133 +65,59 @@
                 margin-bottom: 1rem;
             }
 
-            
-
-
-
-            #pixel-art-options,
-            #pixel-art-colors {
+            #pixel-art-options {
                 display: flex;
                 align-items: center;
             }
 
-            #pixel-art-colors {
-                margin-left: 1rem;
-            }
-
-            .colors {
-                margin-left: 0.5rem;
-                margin-bottom: 1rem;
+            #color-selector-container {
+                display: flex;
+                width: 20rem;
                 position: relative;
-                display: flex;
                 align-items: center;
             }
 
-            .colors > div {
-                width: 1.25rem;
-                cursor: pointer;
-                height: 1.25rem;
+            #canvas-area {
                 position: relative;
-                border-radius: 100px;
-                margin: 0 0.5rem 0 0;
+                border: 5px solid #b9b9b9;
+
             }
 
-            .colors > .select-color {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .colors > div:not(.select-color).current:after,
-            input.current:after {
-                border: 2px solid rgb(112, 142, 255);
+            .cursor-highlight {
                 position: absolute;
-                content: '';
-                border-radius: 100px;
-                top: -4px;
-                left: -4px;
-                width: calc(100% + 4px);
-                height: calc(100% + 4px);
-            }
-
-            input.current:after {
-                top: 1px;
-                left: -1px;
-                width: calc(100% + 0px);
-                height: calc(100% + -4px);
-            }
-            .modal {
-                display: none;
-                position: fixed;
-                z-index: 9999;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.5);
-            }
-
-            .modal-content {
-                background-color: rgb(15, 19, 22);
-                border-radius: 4px;
-                max-width: 400px;
-                margin: 50px auto;
-                padding: 20px;
-            }
-
-            .color-grid {
-                display: grid;
-                grid-template-columns: repeat(6, 0.05fr);
-            }
-
-            .color-item {
-                padding-top: 10px;
-                width: 60px;
-                height: 20px;
-                cursor: pointer;
-                text-align: center;
-                font-size: 10px;
+                background-color: rgba(255, 255, 255, 0.3);
+                border: 1px solid white;
+                pointer-events: none;
             }
         </style>
     </head>
     <body>
-        <div id="canvas"></div>
-        <div id="popup-pixel-art">
+
+        <div id="info">
             <h2>0xPlace</h2>
             <p>0xPlace is an entirely onchain canvas that let's users claim and update pixels. When a pixel is first claimed (0.0001 ETH each), the user receives 100 $PLACE tokens. Each change requires 1 $PLACE token which is paid to the current owner of the pixel.
             </p>
-            <div class="close">
-                <i class="fal fa-times"></i>
-            </div>
         </div>
         <div id="container">
             <div id="button-container">
                 <div id="pixel-art-options">
-                    <div class="update-container">
-                        <button class="update">Update</button>
+                    <button id="update-btn" onclick="setPixelState()">Update</button>
+                    <button id="eraser-btn">Eraser</button>
+                    <div id="color-selector-container">
+                        <p style="margin:1rem 0.25rem 0;">
+                            Select Color:</p>
+                        <input type="color" id="color-picker" value="#ffffff">
                     </div>
-                    <div class="eraser-container">
-                        <button id="eraser">Eraser</button>
-                    </div>
-                    <div class="color-select-container">
-                        <button id="openColorModalBtn">Pick Color</button>
-                    </div>
+                    <button id="mint-btn">Mint</button>
                 </div>
             </div>
-            <div id="pixel-art-area"></div><!-- Color Picker Modal --><div id="colorModal" class="modal">
-                <div class="modal-content">
-                    <h3>Choose a Color</h3>
-                    <div class="color-grid"></div>
-                </div>
-            </div>
+            <div id="pixel-art-area" oncontextmenu="return false;"></div>
         </div>
         <script>
             let config = {
-                width: 40,
-                height: 40,
-                color: 'white',
-                drawing: true,
-                eraser: false
+                width: 512 * 2,
+                height: 512 * 2,
+                defaultColor: '#ffffff'
             }
 
             let events = {
@@ -228,11 +126,7 @@
 
             let colors = [];
 
-            function getBrightness(color) {
-                const rgb = color.match(/[A-Za-z0-9]{2}/g).map(component => parseInt(component, 16));
-                const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-                return brightness;
-            }
+            const pixelArtArea = document.getElementById('pixel-art-area');
 
             // make sure to do this with toHexStringNoPrefix
             window.addEventListener('DOMContentLoaded', () => {
@@ -241,66 +135,298 @@
                 for (let i = 0; i < colorPalette.length; i += 6) {
                     colors.push('#' + colorPalette.slice(i, i + 6));
                 }
-
-                // Handle color selection from the color input
-                colors.forEach(function (color) {
-                    const colorItem = document.createElement('div');
-                    colorItem.classList.add('color-item');
-                    colorItem.style.backgroundColor = color;
-                    colorItem.dataset.color = color;
-                    colorItem.innerText = color;
-                    const brightness = getBrightness(color);
-                    if (brightness > 125) {
-                        colorItem.style.color = '#000000';
-                    } else {
-                        colorItem.style.color = '#ffffff';
-                    } colorGrid.appendChild(colorItem);
-                });
             });
 
-            document.getElementById('pixel-art-area').style.width = `calc(${
-                (0.825 * config.width)
-            }rem + ${
-                (config.height * 2)
-            }px)`;
-            document.getElementById('pixel-art-area').style.height = `calc(${
-                (0.825 * config.height)
-            }rem + ${
-                (config.width * 2)
-            }px)`;
+            // Create pixel art canvas area
+            const canvasArea = document.createElement('canvas')
+            canvasArea.id = 'canvas-area';
+            canvasArea.width = config.width;
+            canvasArea.height = config.height;
+            canvasArea.aspectRatio = config.width / config.height;
+            const context = canvasArea.getContext('2d');
 
-            for (let i = 0; i < config.width; ++ i) {
-                for (let j = 0; j < config.height; ++ j) {
-                    let createEl = document.createElement('div');
-                    createEl.classList.add('pixel');
-                    createEl.setAttribute('data-x-coordinate', j);
-                    createEl.setAttribute('data-y-coordinate', i);
-                    document.getElementById('pixel-art-area').appendChild(createEl);
+            const gridSize = 2; // Adjust this value to change the size of each grid cell
+
+            function drawGrid() {
+                context.strokeStyle = 'gray'; // Grid color and transparency
+                context.lineWidth = 0.1;
+
+                for (let x = 0; x <= canvasArea.width; x += gridSize) {
+                    context.beginPath();
+                    context.moveTo(x, 0);
+                    context.lineTo(x, canvasArea.height);
+                    context.stroke();
+                }
+
+                for (let y = 0; y <= canvasArea.height; y += gridSize) {
+                    context.beginPath();
+                    context.moveTo(0, y);
+                    context.lineTo(canvasArea.width, y);
+                    context.stroke();
                 }
             }
 
-            // Open color picker modal
-            const openColorModalBtn = document.getElementById('openColorModalBtn');
-            const colorModal = document.getElementById('colorModal');
-            const colorGrid = document.querySelector('.color-grid');
+            drawGrid();
 
-            openColorModalBtn.addEventListener('click', function () {
-                colorModal.style.display = 'block';
-            });
+            pixelArtArea.appendChild(canvasArea);
 
-            // Close color picker modal when clicking outside of it
-            window.addEventListener('click', function (event) {
-                if (event.target === colorModal) {
-                    colorModal.style.display = 'none';
+            let activeColor = config.defaultColor;
+            let currentStep = null;
+            let isStepComplete = false;
+            let isLeftMouseDown = false;
+            let isRightMouseDown = false;
+            let dragStartX = 0;
+            let dragStartY = 0;
+            let dragOffsetX = 0;
+            let dragOffsetY = 0;
+            let zoomLevel = 1;
+            let cursorSize = 1;
+            const cursorHighlight = document.createElement('div');
+            cursorHighlight.classList.add('cursor-highlight');
+            document.body.appendChild(cursorHighlight);
+
+
+            pixelArtArea.addEventListener('mousedown', function (event) {
+                if (event.button == 0) {
+                    isLeftMouseDown = true;
+                    if (currentStep === null || isStepComplete) {
+                        currentStep = {
+                            changes: [],
+                            erasures: []
+                        };
+                        isStepComplete = false;
+                    }
+                    handlePixelColor(event);
+                } else if (event.button == 2) {
+                    isRightMouseDown = true;
+                    dragStartX = event.clientX;
+                    dragStartY = event.clientY;
+                    dragOffsetX = dragStartX - pixelArtArea.offsetLeft;
+                    dragOffsetY = dragStartY - pixelArtArea.offsetTop;
+                } else if (event.button == 1) {
+                    dragStartX = 0;
+                    dragStartY = 0;
+                    dragOffsetX = 0;
+                    dragOffsetY = 0;
+                    zoomLevel = 1;
+                    cursorSize = 1;
+                    pixelArtArea.style.transformOrigin = '100}% 100}%';
+                    pixelArtArea.style.transform = `scale(${zoomLevel})`;
                 }
             });
 
-            // Handle color selection from the modal
-            colorGrid.addEventListener('click', function (event) {
-                const selectedColor = event.target.dataset.color;
+            pixelArtArea.addEventListener('mouseup', function (event) {
+                isLeftMouseDown = false;
+                isRightMouseDown = false;
+                if (event.button === 0) {
+                    isStepComplete = true;
+                }
+            });
+
+            pixelArtArea.addEventListener('mousemove', function (event) {
+
+                if (isLeftMouseDown) {
+                    handlePixelColor(event);
+                } else if (isRightMouseDown) {
+                    const offsetX = event.clientX - dragStartX;
+                    const offsetY = event.clientY - dragStartY;
+                    const scrollX = (dragOffsetX - offsetX) / pixelArtArea.offsetWidth;
+                    const scrollY = (dragOffsetY - offsetY) / pixelArtArea.offsetHeight;
+                    pixelArtArea.style.transformOrigin = `${
+                        scrollX * 100
+                    }% ${
+                        scrollY * 100
+                    }%`;
+                }
+                handleCursorHighlighting(event);
+            });
+
+            pixelArtArea.addEventListener('mouseleave', function (event) {
+                isLeftMouseDown = false;
+                isRightMouseDown = false;
+            });
+
+            pixelArtArea.addEventListener('wheel', function (event) {
+                const zoomSpeed = 0.1;
+                if (event.deltaY < 0) { // Zoom in
+                    zoomLevel = Math.min(zoomLevel + zoomSpeed, 10);
+                } else { // Zoom out
+                    zoomLevel = Math.max(zoomLevel - zoomSpeed, 1);
+                }
+                // Calculate the cursor position relative to the canvas area
+                const rect = pixelArtArea.getBoundingClientRect();
+                const cursorX = event.clientX - rect.left;
+                const cursorY = event.clientY - rect.top;
+
+                // Calculate the new scroll position to maintain the cursor position
+                const scrollX = cursorX / pixelArtArea.offsetWidth;
+                const scrollY = cursorY / pixelArtArea.offsetHeight;
+
+                // Apply the new zoom level and scroll position
+                pixelArtArea.style.transformOrigin = `${
+                    scrollX * 100
+                }% ${
+                    scrollY * 100
+                }%`;
+                pixelArtArea.style.transform = `scale(${zoomLevel})`;
+
+                // Prevent the default scroll behavior
+                event.preventDefault();
+            });
+
+            window.addEventListener('keydown', function (event) {
+                if (event.key === '+') {
+                    cursorSize = Math.min(cursorSize + 1, 32);
+                    handleCursorHighlighting(event);
+                } else if (event.key === '-') {
+                    cursorSize = Math.max(cursorSize - 1, 1);
+                    handleCursorHighlighting(event);
+                }
+            });
+
+            // Handle the erase button click event
+            const eraseBtn = document.getElementById('eraser-btn');
+            eraseBtn.addEventListener('click', function () {
+                if (currentStep !== null && isStepComplete) {
+                    handleEraser();
+                    isStepComplete = false;
+                }
+            });
+
+            let changes = [];
+
+            function handleCursorHighlighting(event) {
+                const rect = pixelArtArea.getBoundingClientRect();
+                const x = event.clientX + window.scrollX - rect.left;
+
+                const boxSize = cursorSize;
+
+                // Update the position and size of the highlighted box
+                cursorHighlight.style.left = x + 'px';
+                cursorHighlight.style.top = event.clientY + 'px';
+                cursorHighlight.style.width = boxSize + 'px';
+                cursorHighlight.style.height = boxSize + 'px';
+                cursorHighlight.style.backgroundColor = activeColor;
+                cursorHighlight.style.borderColor = activeColor;
+                cursorHighlight.style.opacity = 0.5;
+            }
+
+            function handleChange(x, y, pixelSize, color) {
+                if (currentStep !== null && ! isStepComplete) {
+                    for (let i = 0; i < pixelSize; i++) {
+                        let pixelExists = false;
+
+                        for (let j = 0; j < currentStep.changes.length; j++) {
+                            if (currentStep.changes[j].x === x + i && currentStep.changes[j].y === y + i) { // Update the color if the pixel already exists in the current step
+                                currentStep.changes[j].color = color;
+                                pixelExists = true;
+                                break;
+                            }
+                        }
+
+                        if (! pixelExists) { // Add the new pixel to the current step if it doesn't exist
+                            currentStep.changes.push({
+                                x: x + i,
+                                y: y + i,
+                                color: color
+                            });
+                        }
+                    }
+                }
+            }
+
+            // we should also modify the changes array to work with indexes instead of x and y
+            // This needs to be modified to erase the last step only and not all changes
+            function handleEraser() {
+                if (currentStep !== null) {
+                    for (let i = 0; i < currentStep.changes.length; i++) {
+                        const {x, y, color} = currentStep.changes[i];
+                        currentStep.erasures.push({x, y, color});
+                    }
+                    currentStep.changes = []; // Clear the changes array
+                }
+            }
+
+
+            function handlePixelColor(event) {
+                const pixelCanvas = document.getElementById('canvas-area');
+                const ctx = pixelCanvas.getContext("2d");
+                const rect = pixelCanvas.getBoundingClientRect();
+                const pixelSize = gridSize;
+
+                const offsetX = rect.left + (window.scrollX * zoomLevel);
+                const offsetY = rect.top + (window.scrollY * zoomLevel);
+
+                const x = Math.floor((event.offsetX) / pixelSize);
+                const y = Math.floor((event.offsetY) / pixelSize);
+
+                if (x > 512 || y > 512) 
+                    return;
+                
+
+                const pixelIndex = y * 2 + x;
+
+                ctx.fillStyle = activeColor;
+                ctx.fillRect(x * pixelSize, y * pixelSize, cursorSize, cursorSize);
+                handleChange(x, y, pixelSize, activeColor);
+            }
+
+            function randomIntFromInterval(min, max) { // min and max included
+                return Math.floor(Math.random() * (max - min + 1) + min)
+            }
+
+            let indexedColors = "";
+
+            const setTestColors = () => {
+                for (let idx = 0; idx < (512 * 512); idx++) {
+                    indexedColors += randomIntFromInterval(0, 215).toString(16).padStart(2, "0");
+                }
+            }
+
+            async function setPixelState() {
+                setTestColors();
+                const pixelCanvas = document.getElementById('canvas-area');
+                const ctx = pixelCanvas.getContext("2d");
+
+                for (let idx = 0; idx < indexedColors.length; idx += 2) {
+                    colorIndex = parseInt(indexedColors[idx], 16);
+                    const x = idx % 512;
+                    const y = Math.floor(idx / 512);
+                    ctx.fillStyle = colors[colorIndex];
+                    ctx.fillRect(x * gridSize, y * gridSize, 1 * gridSize, 1 * gridSize);
+                }
+
+            }
+
+            const mintButton = document.getElementById('mint-btn');
+            mintButton.addEventListener('click', getDelta);
+
+            function getDelta() {
+                console.log(changes);
+            }
+
+            const colorPicker = document.querySelector('#color-picker');
+            const hexToRgb = hex => hex.slice(1).replace(/^(.)(.)(.)$/gi, "$1$1$2$2$3$3").match(/.{2}/g).map(c => parseInt(c, 16));
+            const distance = (a, b) => Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2) + Math.pow(a[2] - b[2], 2));
+
+            let nearestColor = colorHex => colors.reduce((a, v, i, arr) => a = distance(hexToRgb(colorHex), hexToRgb(v)) < a[0] ? [
+                distance(hexToRgb(colorHex), hexToRgb(v)),
+                v
+            ] : a, [
+                Number.POSITIVE_INFINITY, colors[0]
+            ])[1];
+
+            colorPicker.addEventListener('change', function (event) {
+                const selectedColor = event.target.value;
                 if (selectedColor) {
-                    document.querySelector('.color-input').value = selectedColor;
-                    colorModal.style.display = 'none';
+                    activeColor = nearestColor(selectedColor);
+                }
+            });
+
+            colorPicker.addEventListener('input', function (event) {
+                const selectedColor = event.target.value;
+                if (selectedColor) {
+                    activeColor = nearestColor(selectedColor);
                 }
             });
         </script>
