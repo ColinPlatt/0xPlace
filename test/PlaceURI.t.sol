@@ -6,7 +6,6 @@ import "forge-std/Test.sol";
 import "src/PlaceURI.sol";
 
 contract UITest is Test {
-
     UIProvider public placeURI;
 
     constructor() {
@@ -19,7 +18,4 @@ contract UITest is Test {
         emit log_named_string("website", result);
         vm.writeFile("test/output/renderedPlaceUI.html", result);
     }
-
-
-
 }

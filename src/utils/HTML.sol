@@ -63,6 +63,11 @@ library HTML {
         return el("p", _props, _children);
     }
 
+    function p_(string memory _children) internal pure returns (string memory) {
+        return el("p", _children);
+    }
+
+
     function span(string memory _props, string memory _children) internal pure returns (string memory) {
         return el("span", _props, _children);
     }
@@ -73,6 +78,14 @@ library HTML {
 
     function h1(string memory _props, string memory _children) internal pure returns (string memory) {
         return el("h1", _props, _children);
+    }
+
+    function h2(string memory _props, string memory _children) internal pure returns (string memory) {
+        return el("h2", _props, _children);
+    }
+
+    function h2_(string memory _children) internal pure returns (string memory) {
+        return el("h2", _children);
     }
 
     /* CSS */

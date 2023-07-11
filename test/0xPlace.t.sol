@@ -14,12 +14,11 @@ contract ZeroPlaceTest is Test {
 
     constructor() {
         vm.startPrank(dep);
-            place = new zeroxPlace();
+        place = new zeroxPlace();
         vm.stopPrank();
     }
 
     function testSetup() public {
-
         assert(place.supportsInterface(0x57de26a4));
 
         PlaceToken token = PlaceToken(place.token());

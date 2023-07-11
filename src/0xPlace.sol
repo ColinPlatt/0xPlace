@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import { PlaceToken } from "./PlaceToken.sol";
-import { Ownable, SafeTransferLib } from "lib/solady/src/Milady.sol";
+import {PlaceToken} from "./PlaceToken.sol";
+import {Ownable, SafeTransferLib} from "lib/solady/src/Milady.sol";
 
 interface IURIProvider {
     function read() external view returns (string memory);
@@ -14,8 +14,8 @@ interface IUIProvider {
 
 contract zeroxPlace is IURIProvider, Ownable {
     PlaceToken public immutable token;
-    uint public constant MAX_PIXELS = 262_144; //512*512
-    
+    uint256 public constant MAX_PIXELS = 262_144; //512*512
+
     IUIProvider public uiProvider;
     bool public freezeUiProvider = false;
 
@@ -60,7 +60,6 @@ contract zeroxPlace is IURIProvider, Ownable {
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
     function read() external view override returns (string memory) {
         return "https://0xplace.com/api/";
     }
@@ -100,7 +99,7 @@ contract zeroxPlace is IURIProvider, Ownable {
     function draw(uint256 index, uint8 color) public {
         if (color > 215) revert INVALID_COLOR();
         if (index > MAX_PIXELS) revert OUT_OF_BOUNDS();
-        
+
         token.transferFrom(msg.sender, pixelOwner[index], 1e18); // transfer 1 PLACE token to the current owner of the pixel
         pixelOwner[index] = msg.sender; // set msg.sender as the new owner of the pixel
         canvas[index] = bytes1(color);
@@ -110,11 +109,10 @@ contract zeroxPlace is IURIProvider, Ownable {
 
     function draw(uint256[] memory indexes, uint8[] memory colors) public {
         if (indexes.length != colors.length) revert UNBALANCE_ARRAY();
-        
 
-        uint len = indexes.length;
+        uint256 len = indexes.length;
 
-        unchecked{
+        unchecked {
             for (uint256 i = 0; i < len; i++) {
                 if (indexes[i] > MAX_PIXELS) revert OUT_OF_BOUNDS();
                 if (colors[i] > 215) revert INVALID_COLOR();
