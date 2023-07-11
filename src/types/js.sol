@@ -12,44 +12,44 @@ function readFn(fn memory _fn) pure returns (string memory) {
     return _fn._function;
 }
 
-function appendFn(fn memory _fn, string memory _op) pure returns (fn memory) {
+function appendFn(fn memory _fn, string memory _op) pure {
     _fn._function = LibString.concat(_fn._function, _op);
-    return _fn;
 }
 
-function prependFn(fn memory _fn, string memory _op) pure returns (fn memory) {
+function prependFn(fn memory _fn, string memory _op) pure {
     _fn._function = LibString.concat(_op, _fn._function);
-    return _fn;
 }
 
-function initializeNamedFn(fn memory _fn, string memory _name) pure returns (fn memory) {
+function initializeNamedFn(fn memory _fn, string memory _name) pure {
     _fn._function = string.concat("function ", _name, "()");
-    return _fn;
 }
 
-function initializeNamedArgsFn(fn memory _fn, string memory _name, string memory _args) pure returns (fn memory) {
+function initializeNamedArgsFn(fn memory _fn, string memory _name, string memory _args) pure {
     _fn._function = string.concat("function ", _name, "(", _args, ")");
-    return _fn;
 }
 
-function initializeFn(fn memory _fn) pure returns (fn memory) {
+function initializeFn(fn memory _fn) pure {
     _fn._function = "function()";
-    return _fn;
 }
 
-function initializeArgsFn(fn memory _fn, string memory _args) pure returns (fn memory) {
+function initializeArgsFn(fn memory _fn, string memory _args) pure {
     _fn._function = string.concat("function(", _args, ")");
-    return _fn;
 }
 
-function asyncFn(fn memory _fn) pure returns (fn memory) {
-    _fn = _fn.prependFn("async ");
-    return _fn;
+function asyncFn(fn memory _fn) pure {
+    _fn.prependFn("async ");
 }
 
-function bodyFn(fn memory _fn, string memory _body) pure returns (fn memory) {
-    _fn = _fn.appendFn(string.concat("{", _body, "}"));
-    return _fn;
+function bodyFn(fn memory _fn, string memory _body) pure {
+    _fn.appendFn(string.concat("{", _body, "}"));
+}
+
+function openBodyFn(fn memory _fn) pure {
+    _fn.appendFn("{");
+}
+
+function closeBodyFn(fn memory _fn) pure {
+    _fn.appendFn("}");
 }
 
 using {
@@ -61,7 +61,9 @@ using {
     initializeFn,
     initializeArgsFn,
     asyncFn,
-    bodyFn
+    bodyFn,
+    openBodyFn,
+    closeBodyFn
 } for fn global;
 
 enum ArrowFn {
@@ -89,53 +91,38 @@ function readArrowFn(arrowFn memory _arrowFn) pure returns (string memory) {
     return _arrowFn._function;
 }
 
-function appendArrowFn(arrowFn memory _arrowFn, string memory _op) pure returns (arrowFn memory) {
+function appendArrowFn(arrowFn memory _arrowFn, string memory _op) pure {
     _arrowFn._function = LibString.concat(_arrowFn._function, _op);
-    return _arrowFn;
 }
 
-function prependArrowFn(arrowFn memory _arrowFn, string memory _op) pure returns (arrowFn memory) {
+function prependArrowFn(arrowFn memory _arrowFn, string memory _op) pure {
     _arrowFn._function = LibString.concat(_op, _arrowFn._function);
-    return _arrowFn;
 }
 
-function initializeNamedArrowFn(arrowFn memory _arrowFn, ArrowFn _type, string memory _name)
-    pure
-    returns (arrowFn memory)
-{
+function initializeNamedArrowFn(arrowFn memory _arrowFn, ArrowFn _type, string memory _name) pure {
     _arrowFn._function = string.concat(getArrowFnType(_type), _name, " = () => ");
-    return _arrowFn;
 }
 
 function initializeNamedArgsArrowFn(arrowFn memory _arrowFn, ArrowFn _type, string memory _name, string memory _args)
     pure
-    returns (arrowFn memory)
 {
     _arrowFn._function = string.concat(getArrowFnType(_type), _name, " = (", _args, ") => ");
-    return _arrowFn;
 }
 
-function initializeArrowFn(arrowFn memory _arrowFn) pure returns (arrowFn memory) {
+function initializeArrowFn(arrowFn memory _arrowFn) pure {
     _arrowFn._function = "() => ";
-    return _arrowFn;
 }
 
-function initializeArgsArrowFn(arrowFn memory _arrowFn, string memory _args) pure returns (arrowFn memory) {
+function initializeArgsArrowFn(arrowFn memory _arrowFn, string memory _args) pure {
     _arrowFn._function = string.concat("(", _args, ") => ");
-    return _arrowFn;
 }
 
-function asyncArrowFn(arrowFn memory _arrowFn) pure returns (arrowFn memory) {
-    _arrowFn = _arrowFn.prependArrowFn("async ");
-    return _arrowFn;
+function asyncArrowFn(arrowFn memory _arrowFn) pure {
+    _arrowFn.prependArrowFn("async ");
 }
 
-function initializeNamedAsyncArrowFn(arrowFn memory _arrowFn, ArrowFn _type, string memory _name)
-    pure
-    returns (arrowFn memory)
-{
+function initializeNamedAsyncArrowFn(arrowFn memory _arrowFn, ArrowFn _type, string memory _name) pure {
     _arrowFn._function = string.concat(getArrowFnType(_type), _name, " = async () => ");
-    return _arrowFn;
 }
 
 function initializeNamedAsyncArgsArrowFn(
@@ -143,14 +130,20 @@ function initializeNamedAsyncArgsArrowFn(
     ArrowFn _type,
     string memory _name,
     string memory _args
-) pure returns (arrowFn memory) {
+) pure {
     _arrowFn._function = string.concat(getArrowFnType(_type), _name, " = async (", _args, ") => ");
-    return _arrowFn;
 }
 
-function bodyArrowFn(arrowFn memory _arrowFn, string memory _body) pure returns (arrowFn memory) {
-    _arrowFn = _arrowFn.appendArrowFn(string.concat("{", _body, "}"));
-    return _arrowFn;
+function bodyArrowFn(arrowFn memory _arrowFn, string memory _body) pure {
+    _arrowFn.appendArrowFn(string.concat("{", _body, "};"));
+}
+
+function openBodyArrowFn(arrowFn memory _arrowFn) pure {
+    _arrowFn.appendArrowFn("{");
+}
+
+function closeBodyArrowFn(arrowFn memory _arrowFn) pure {
+    _arrowFn.appendArrowFn("};");
 }
 
 using {
@@ -164,5 +157,7 @@ using {
     asyncArrowFn,
     initializeNamedAsyncArrowFn,
     initializeNamedAsyncArgsArrowFn,
-    bodyArrowFn
+    bodyArrowFn,
+    openBodyArrowFn,
+    closeBodyArrowFn
 } for arrowFn global;

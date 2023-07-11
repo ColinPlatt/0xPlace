@@ -2,13 +2,13 @@ pragma solidity ^0.8.0;
 
 library StructPacker {
     struct slice {
-        uint _len;
-        uint _ptr;
+        uint256 _len;
+        uint256 _ptr;
     }
 
-    function memcpy(uint dest, uint src, uint len) private pure {
+    function memcpy(uint256 dest, uint256 src, uint256 len) private pure {
         // Copy word-length chunks while possible
-        for(; len >= 32; len -= 32) {
+        for (; len >= 32; len -= 32) {
             assembly {
                 mstore(dest, mload(src))
             }
@@ -17,7 +17,7 @@ library StructPacker {
         }
 
         // Copy remaining bytes
-        uint mask = type(uint).max;
+        uint256 mask = type(uint256).max;
         if (len > 0) {
             mask = 256 ** (32 - len) - 1;
         }
@@ -29,7 +29,7 @@ library StructPacker {
     }
 
     function toSliceBytes(bytes memory self) internal pure returns (slice memory) {
-        uint ptr;
+        uint256 ptr;
         assembly {
             ptr := add(self, 0x20)
         }
@@ -38,12 +38,12 @@ library StructPacker {
 
     function toByteString(slice memory self) internal pure returns (bytes memory) {
         bytes memory ret = new bytes(self._len);
-        uint retptr;
-        assembly { retptr := add(ret, 32) }
+        uint256 retptr;
+        assembly {
+            retptr := add(ret, 32)
+        }
 
         memcpy(retptr, self._ptr, self._len);
         return ret;
     }
-
-
 }

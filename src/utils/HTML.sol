@@ -47,7 +47,6 @@ library HTML {
         return elProp("input", _props);
     }
 
-
     function script(string memory _children) internal pure returns (string memory) {
         return el("script", _children);
     }
@@ -71,7 +70,6 @@ library HTML {
     function p_(string memory _children) internal pure returns (string memory) {
         return el("p", _children);
     }
-
 
     function span(string memory _props, string memory _children) internal pure returns (string memory) {
         return el("span", _props, _children);
@@ -121,12 +119,12 @@ library HTML {
     function elOpen(string memory _tag, string memory _props) internal pure returns (string memory) {
         return string.concat("<", _tag, " ", _props, ">");
     }
-    
+
     // A generic element, can be used to construct any HTML element without props
     function elOpen(string memory _tag) internal pure returns (string memory) {
         return string.concat("<", _tag, ">");
     }
-    
+
     function elClose(string memory _tag) internal pure returns (string memory) {
         return string.concat("</", _tag, ">");
     }

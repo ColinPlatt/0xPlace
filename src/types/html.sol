@@ -15,7 +15,6 @@ struct childCallback_ {
     function (string memory) pure returns (string memory) callback;
 }
 
-
 struct html {
     string head;
     string body;
@@ -29,12 +28,19 @@ struct nesting {
 /* HTML NESTING OPERATIONS */
 
 function readNesting(nesting memory _nesting) pure returns (string memory) {
-    if(_nesting.currentNestingLevel > 0) return string.concat(_nesting.nestingContent, "...error: nesting not closed ", LibString.toString(_nesting.currentNestingLevel), "levels left");
+    if (_nesting.currentNestingLevel > 0) {
+        return string.concat(
+            _nesting.nestingContent,
+            "...error: nesting not closed ",
+            LibString.toString(_nesting.currentNestingLevel),
+            "levels left"
+        );
+    }
     return _nesting.nestingContent;
 }
 
 function addToNest(nesting memory _nesting, string memory _nestingContent, bool indent) pure {
-    if(indent) _nesting.currentNestingLevel++;
+    if (indent) _nesting.currentNestingLevel++;
     _nesting.nestingContent = LibString.concat(_nesting.nestingContent, _nestingContent);
 }
 
@@ -44,7 +50,6 @@ function closeNestLevel(nesting memory _nesting, string memory _tag) pure {
 }
 
 using {readNesting, addToNest, closeNestLevel} for nesting global;
-
 
 /* HTML STRUCTURE OPERATIONS */
 function read(html memory _html) pure returns (string memory) {
@@ -88,18 +93,20 @@ function div_(html memory _html, string memory _children) pure {
     _html.appendBody(el("div", _children));
 }
 
-function divChild(
-    html memory _html,
-    string memory _props,
-    childCallback memory _childCallback
-) pure {
-    _html.appendBody(
-        elCallBack(
-            "div",
-            _props,
-            _childCallback
-        )
-    );
+function divOpen(html memory _html, string memory _props) pure {
+    _html.appendBody(elOpen("div", _props));
+}
+
+function divOpen_(html memory _html) pure {
+    _html.appendBody(elOpen("div"));
+}
+
+function divClose(html memory _html) pure {
+    _html.appendBody(elClose("div"));
+}
+
+function divChild(html memory _html, string memory _props, childCallback memory _childCallback) pure {
+    _html.appendBody(elCallBack("div", _props, _childCallback));
 }
 
 function divChildRecursive(
@@ -108,16 +115,8 @@ function divChildRecursive(
     childCallback memory _childCallbackOuter,
     childCallback memory _childCallbacksInner
 ) pure {
-    _html.appendBody(
-        elCallBackRecursive(
-            "div",
-            _propsOutermost,
-            _childCallbackOuter,
-            _childCallbacksInner
-        )
-    );
+    _html.appendBody(elCallBackRecursive("div", _propsOutermost, _childCallbackOuter, _childCallbacksInner));
 }
-
 
 function elCallBackRecursive(
     string memory _tagOutermost,
@@ -125,70 +124,33 @@ function elCallBackRecursive(
     childCallback memory _childCallbackOuter,
     childCallback memory _childCallbacksInner
 ) pure returns (string memory) {
-
     return string.concat(
-        "<", 
-        _tagOutermost, 
-        " ", 
-        _propsOutermost, 
-        ">", 
-        _childCallbackOuter.callback(_childCallbackOuter.prop, 
-            _childCallbacksInner.callback(
-                _childCallbacksInner.prop, 
-                _childCallbacksInner.child
-            )
+        "<",
+        _tagOutermost,
+        " ",
+        _propsOutermost,
+        ">",
+        _childCallbackOuter.callback(
+            _childCallbackOuter.prop,
+            _childCallbacksInner.callback(_childCallbacksInner.prop, _childCallbacksInner.child)
         ),
-        "</", 
-        _tagOutermost, 
+        "</",
+        _tagOutermost,
         ">"
     );
 }
 
-
-
-function divChildren(
-    html memory _html,
-    string memory _props,
-    childCallback[] memory _childCallbacks
-) pure {
-    _html.appendBody(
-        elCallBack(
-            "div",
-            _props,
-            _childCallbacks
-        )
-    );
+function divChildren(html memory _html, string memory _props, childCallback[] memory _childCallbacks) pure {
+    _html.appendBody(elCallBack("div", _props, _childCallbacks));
 }
 
-
-function divChild_(
-    html memory _html,
-    string memory _props,
-    childCallback_ memory _childCallback
-) pure {
-    _html.appendBody(
-        elCallBack(
-            "div",
-            _props,
-            _childCallback
-        )
-    );
+function divChild_(html memory _html, string memory _props, childCallback_ memory _childCallback) pure {
+    _html.appendBody(elCallBack("div", _props, _childCallback));
 }
 
-function divChildren_(
-    html memory _html,
-    string memory _props,
-    childCallback_[] memory _childCallbacks
-) pure {
-    _html.appendBody(
-        elCallBack(
-            "div",
-            _props,
-            _childCallbacks
-        )
-    );
+function divChildren_(html memory _html, string memory _props, childCallback_[] memory _childCallbacks) pure {
+    _html.appendBody(elCallBack("div", _props, _childCallbacks));
 }
-
 
 function textarea(html memory _html, string memory _props, string memory _children) pure {
     _html.appendBody(el("textarea", _props, _children));
@@ -254,7 +216,6 @@ function h2_(html memory _html, string memory _children) pure {
     _html.appendBody(el("h2", _children));
 }
 
-
 function hN(html memory _html, uint256 _n, string memory _props, string memory _children) pure {
     _html.appendBody(el(LibString.concat("h", LibString.toString(_n)), _props, _children));
 }
@@ -300,104 +261,51 @@ function elProp(string memory _tag, string memory _prop) pure returns (string me
     return string.concat("<", _tag, " ", _prop, "/>");
 }
 
-function elCallBack(
-    string memory _tag,
-    string memory _props,
-    childCallback memory _childCallback
-) pure returns (string memory) {
+function elCallBack(string memory _tag, string memory _props, childCallback memory _childCallback)
+    pure
+    returns (string memory)
+{
     return string.concat(
-        "<", 
-        _tag, 
-        " ", 
-        _props, 
-        ">", 
-        _childCallback.callback(
-            _childCallback.prop, 
-            _childCallback.child
-        ), 
-        "</", 
-        _tag, 
-        ">"
+        "<", _tag, " ", _props, ">", _childCallback.callback(_childCallback.prop, _childCallback.child), "</", _tag, ">"
     );
 }
 
-function elCallBack(
-    string memory _tag,
-    string memory _props,
-    childCallback_ memory _childCallback
-) pure returns (string memory) {
-    return string.concat(
-        "<", 
-        _tag, 
-        " ", 
-        _props, 
-        ">", 
-        _childCallback.callback(
-            _childCallback.prop 
-        ), 
-        "</", 
-        _tag, 
-        ">"
-    );
+function elCallBack(string memory _tag, string memory _props, childCallback_ memory _childCallback)
+    pure
+    returns (string memory)
+{
+    return string.concat("<", _tag, " ", _props, ">", _childCallback.callback(_childCallback.prop), "</", _tag, ">");
 }
 
-function elCallBack(
-    string memory _tag,
-    string memory _props,
-    childCallback_[] memory _childCallback
-) pure returns (string memory) {
-
+function elCallBack(string memory _tag, string memory _props, childCallback_[] memory _childCallback)
+    pure
+    returns (string memory)
+{
     string memory _children;
-    
+
     unchecked {
         for (uint256 i = 0; i < _childCallback.length; i++) {
             _children = LibString.concat(_children, _childCallback[i].callback(_childCallback[i].prop));
         }
     }
 
-    return string.concat(
-        "<", 
-        _tag, 
-        " ", 
-        _props, 
-        ">", 
-        _children,
-        "</", 
-        _tag, 
-        ">"
-    );
+    return string.concat("<", _tag, " ", _props, ">", _children, "</", _tag, ">");
 }
 
-function elCallBack(
-    string memory _tag,
-    string memory _props,
-    childCallback[] memory _childCallback
-) pure returns (string memory) {
-
+function elCallBack(string memory _tag, string memory _props, childCallback[] memory _childCallback)
+    pure
+    returns (string memory)
+{
     string memory _children;
-    
+
     unchecked {
         for (uint256 i = 0; i < _childCallback.length; i++) {
-            _children = LibString.concat(_children, 
-                _childCallback[i].callback(
-                    _childCallback[i].prop,
-                    _childCallback[i].child
-                )
-            );
+            _children =
+                LibString.concat(_children, _childCallback[i].callback(_childCallback[i].prop, _childCallback[i].child));
         }
     }
 
-    return string.concat(
-        "<", 
-        _tag, 
-        " ", 
-        _props, 
-        ">", 
-        _children,
-        "</", 
-        _tag, 
-        ">"
-    );
+    return string.concat("<", _tag, " ", _props, ">", _children, "</", _tag, ">");
 }
 
 // an HTML attribute
@@ -418,6 +326,9 @@ using {
     divChild_,
     divChildren_,
     divChildRecursive,
+    divOpen,
+    divOpen_,
+    divClose,
     textarea,
     link,
     link_,

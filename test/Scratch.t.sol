@@ -61,8 +61,8 @@ contract ScratchTest is Test {
     }
 
     struct slice {
-        uint _len;
-        uint _ptr;
+        uint256 _len;
+        uint256 _ptr;
     }
 
     struct childCallback_ {
@@ -70,9 +70,9 @@ contract ScratchTest is Test {
         function () pure returns (string memory) callback;
     }
 
-    function memcpy(uint dest, uint src, uint len) private pure {
+    function memcpy(uint256 dest, uint256 src, uint256 len) private pure {
         // Copy word-length chunks while possible
-        for(; len >= 32; len -= 32) {
+        for (; len >= 32; len -= 32) {
             assembly {
                 mstore(dest, mload(src))
             }
@@ -81,7 +81,7 @@ contract ScratchTest is Test {
         }
 
         // Copy remaining bytes
-        uint mask = type(uint).max;
+        uint256 mask = type(uint256).max;
         if (len > 0) {
             mask = 256 ** (32 - len) - 1;
         }
@@ -93,8 +93,8 @@ contract ScratchTest is Test {
     }
 
     function toSliceCallback(childCallback_ memory self) internal pure returns (slice memory) {
-        uint ptr;
-        uint len;
+        uint256 ptr;
+        uint256 len;
         assembly {
             ptr := add(self, 0x20)
             len := mload(self)
@@ -104,15 +104,16 @@ contract ScratchTest is Test {
 
     function toStringCallback(slice memory self) internal pure returns (bytes memory) {
         bytes memory ret;
-        uint retptr;
-        assembly { retptr := add(ret, 0x20) }
+        uint256 retptr;
+        assembly {
+            retptr := add(ret, 0x20)
+        }
 
         memcpy(retptr, self._ptr, self._len);
         return ret;
     }
 
     function testFunctionRead() public {
-
         childCallback_ memory childCallback = childCallback_("prop", basicFunction);
 
         slice memory testSlice = toSliceCallback(childCallback);
@@ -126,8 +127,6 @@ contract ScratchTest is Test {
 
         //emit log_named_string("testCallback.prop", testCallback.prop);
         //emit log_named_string("testCallback.callback", testCallback.callback());
-
-
     }
 
     /*
