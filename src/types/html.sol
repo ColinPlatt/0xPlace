@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {LibString, ExtLibString} from "../utils/ExtLibString.sol";
+import {StructPacker} from "../utils/StructPacker.sol";
 
 struct childCallback {
     string prop;
@@ -14,10 +15,36 @@ struct childCallback_ {
     function (string memory) pure returns (string memory) callback;
 }
 
+
 struct html {
     string head;
     string body;
 }
+
+struct nesting {
+    string nestingContent;
+    uint256 currentNestingLevel;
+}
+
+/* HTML NESTING OPERATIONS */
+
+function readNesting(nesting memory _nesting) pure returns (string memory) {
+    if(_nesting.currentNestingLevel > 0) return string.concat(_nesting.nestingContent, "...error: nesting not closed ", LibString.toString(_nesting.currentNestingLevel), "levels left");
+    return _nesting.nestingContent;
+}
+
+function addToNest(nesting memory _nesting, string memory _nestingContent, bool indent) pure {
+    if(indent) _nesting.currentNestingLevel++;
+    _nesting.nestingContent = LibString.concat(_nesting.nestingContent, _nestingContent);
+}
+
+function closeNestLevel(nesting memory _nesting, string memory _tag) pure {
+    _nesting.currentNestingLevel--;
+    _nesting.nestingContent = string.concat(_nesting.nestingContent, "</", _tag, ">");
+}
+
+using {readNesting, addToNest, closeNestLevel} for nesting global;
+
 
 /* HTML STRUCTURE OPERATIONS */
 function read(html memory _html) pure returns (string memory) {
@@ -75,6 +102,65 @@ function divChild(
     );
 }
 
+function divChildRecursive(
+    html memory _html,
+    string memory _propsOutermost,
+    childCallback memory _childCallbackOuter,
+    childCallback memory _childCallbacksInner
+) pure {
+    _html.appendBody(
+        elCallBackRecursive(
+            "div",
+            _propsOutermost,
+            _childCallbackOuter,
+            _childCallbacksInner
+        )
+    );
+}
+
+
+function elCallBackRecursive(
+    string memory _tagOutermost,
+    string memory _propsOutermost,
+    childCallback memory _childCallbackOuter,
+    childCallback memory _childCallbacksInner
+) pure returns (string memory) {
+
+    return string.concat(
+        "<", 
+        _tagOutermost, 
+        " ", 
+        _propsOutermost, 
+        ">", 
+        _childCallbackOuter.callback(_childCallbackOuter.prop, 
+            _childCallbacksInner.callback(
+                _childCallbacksInner.prop, 
+                _childCallbacksInner.child
+            )
+        ),
+        "</", 
+        _tagOutermost, 
+        ">"
+    );
+}
+
+
+
+function divChildren(
+    html memory _html,
+    string memory _props,
+    childCallback[] memory _childCallbacks
+) pure {
+    _html.appendBody(
+        elCallBack(
+            "div",
+            _props,
+            _childCallbacks
+        )
+    );
+}
+
+
 function divChild_(
     html memory _html,
     string memory _props,
@@ -112,8 +198,12 @@ function link(html memory _html, string memory _props, string memory _children) 
     _html.appendHead(el("link", _props, _children));
 }
 
-function link_(html memory _html, string memory _children) pure {
-    _html.appendHead(el("link", _children));
+function link_(html memory _html, string memory _props) pure {
+    _html.appendHead(elProp("link", _props));
+}
+
+function input(html memory _html, string memory _props) pure {
+    _html.appendHead(elProp("input", _props));
 }
 
 function a(html memory _html, string memory _props, string memory _children) pure {
@@ -192,6 +282,19 @@ function el(string memory _tag, string memory _children) pure returns (string me
     return string.concat("<", _tag, ">", _children, "</", _tag, ">");
 }
 
+function elOpen(string memory _tag, string memory _props) pure returns (string memory) {
+    return string.concat("<", _tag, " ", _props, ">");
+}
+
+// A generic element, can be used to construct any HTML element without props
+function elOpen(string memory _tag) pure returns (string memory) {
+    return string.concat("<", _tag, ">");
+}
+
+function elClose(string memory _tag) pure returns (string memory) {
+    return string.concat("</", _tag, ">");
+}
+
 // A generic element, can be used to construct any HTML element without children
 function elProp(string memory _tag, string memory _prop) pure returns (string memory) {
     return string.concat("<", _tag, " ", _prop, "/>");
@@ -265,6 +368,38 @@ function elCallBack(
     );
 }
 
+function elCallBack(
+    string memory _tag,
+    string memory _props,
+    childCallback[] memory _childCallback
+) pure returns (string memory) {
+
+    string memory _children;
+    
+    unchecked {
+        for (uint256 i = 0; i < _childCallback.length; i++) {
+            _children = LibString.concat(_children, 
+                _childCallback[i].callback(
+                    _childCallback[i].prop,
+                    _childCallback[i].child
+                )
+            );
+        }
+    }
+
+    return string.concat(
+        "<", 
+        _tag, 
+        " ", 
+        _props, 
+        ">", 
+        _children,
+        "</", 
+        _tag, 
+        ">"
+    );
+}
+
 // an HTML attribute
 function prop(string memory _key, string memory _val) pure returns (string memory) {
     return string.concat(_key, "=", '"', _val, '" ');
@@ -279,11 +414,14 @@ using {
     div,
     div_,
     divChild,
+    divChildren,
     divChild_,
     divChildren_,
+    divChildRecursive,
     textarea,
     link,
     link_,
+    input,
     a,
     a_,
     p,

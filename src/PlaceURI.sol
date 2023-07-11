@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {WebSafeColors} from "./utils/WebSafeColors.sol";
-import {html, childCallback, childCallback_, fn, arrowFn, css} from "./types/vu3.sol";
+import {html, childCallback, childCallback_, nesting, fn, arrowFn, css} from "./types/vu3.sol";
 import {libBrowserProvider, libJsonRPCProvider} from "./utils/libBrowserProvider.sol";
 import {ExtLibString, LibString} from "./utils/ExtLibString.sol";
 import {Base64} from "lib/solady/src/utils/Base64.sol";
@@ -24,10 +24,65 @@ contract UIProvider {
 
     }
 
+    //118788
+    function _getContainer(html memory _page) internal pure {
+        childCallback[] memory colorSelectorChildren = new childCallback[](2);
 
-    function _getBody(html memory _page) internal pure{
+        colorSelectorChildren[0] = childCallback(string('style').prop('margin:1rem 0.25rem 0;'), 'Select Colors:', HTML.p);
+        colorSelectorChildren[1] = childCallback(
+            string.concat(
+                string('type').prop('color'),
+                string('id').prop('color-picker'),
+                string('value').prop('#ffffff')
+            ), 
+            '', 
+            HTML.input
+        );
+
+        _page.appendBody(string('div').elOpen(string('id').prop('button-container')));
+            _page.appendBody(string('div').elOpen(string('id').prop('pixel-art-options')));
+                _page.button(
+                    string.concat(
+                        string('id').prop('update-btn'),
+                        string('onclick').prop('setPixelState()')
+                    ),
+                    'Update'
+                );
+                _page.button(
+                    string('id').prop('eraser-btn'),
+                    'Erase'
+                );
+                _page.divChildren(
+                    string('id').prop('color-selector-container'),
+                    colorSelectorChildren
+                );
+            _page.button(
+                string('id').prop('mint-btn'),
+                'Mint'
+            );
+            _page.appendBody(string('div').elClose());
+        _page.appendBody(string('div').elClose());
+    }
+
+    function _getRecursive(html memory _page) internal pure {
+        nesting memory _nest;
+
+        _nest.addToNest(HTML.elOpen('div', HTML.prop('id', 'recursive-container')),true);
+            _nest.addToNest(HTML.elOpen('div', HTML.prop('id', 'recursive-outer-container')),true);
+                _nest.addToNest(HTML.div(HTML.prop('id', 'recursive-inner1-container'),''),false);
+                _nest.addToNest(HTML.div(HTML.prop('id', 'recursive-inner2-container'),''),false);
+            _nest.closeNestLevel('div');
+        _nest.closeNestLevel('div');
+
+
+        _page.appendBody(_nest.readNesting());
+    }
+
+    function _getBody(html memory _page) internal pure {
         
         _getInfoDiv(_page);
+        _getContainer(_page);
+        _getRecursive(_page);
 
     }
 
@@ -52,7 +107,7 @@ contract UIProvider {
 library PlaceCSS {
     using HTML for string;
 
-    function _getButtonCSS(css memory _style) private pure returns (css memory) {
+    function _getButtonCSS(css memory _style) private pure {
         _style.addCSSElement(
             "button",
             string.concat(
@@ -62,16 +117,14 @@ library PlaceCSS {
                 string("font-family").cssDecl("inherit"),
                 string("padding").cssDecl("0.25rem 1rem"),
                 string("color").cssDecl("white"),
-                string("font-weight").cssDecl("800"),
                 string("margin").cssDecl("1rem 1rem 0"),
-                string("font-size").cssDecl("1rem")
+                string("font-size").cssDecl("1rem"),
+                string("border-radius").cssDecl("7px")
             )
         );
-
-        return _style;
     }
 
-    function _getMainCSS(css memory _style) private pure returns (css memory) {
+    function _getMainCSS(css memory _style) private pure {
         _style.addCSSElement(
             "body",
             string.concat(
@@ -91,7 +144,7 @@ library PlaceCSS {
             )
         );
 
-        _style = _getButtonCSS(_style);
+        _getButtonCSS(_style);
 
         _style.addCSSElement(
             'input[type="color"]',
@@ -105,11 +158,9 @@ library PlaceCSS {
                 string("cursor").cssDecl("pointer")
             )
         );
-
-        return _style;
     }
 
-    function _getCanvasCSS(css memory _style) private pure returns (css memory) {
+    function _getCanvasCSS(css memory _style) private pure {
         _style.addCSSElement(
             "#pixel-art-area",
             string.concat(
@@ -139,15 +190,14 @@ library PlaceCSS {
             )
         );
 
-        return _style;
     }
 
     function _getCSS() internal pure returns (string memory) {
         css memory style;
 
-        style = _getMainCSS(style);
+        _getMainCSS(style);
 
-        style = _getCanvasCSS(style);
+        _getCanvasCSS(style);
 
         style.addCSSElement(
             "#button-container",
