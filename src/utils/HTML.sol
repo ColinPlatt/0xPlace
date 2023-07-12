@@ -35,15 +35,19 @@ library HTML {
         return el("textarea", _props, _children);
     }
 
-    function img(string memory _src, string memory _props) internal pure returns (string memory) {
+    function img_(string memory _src, string memory _props) internal pure returns (string memory) {
         return el("img", string.concat(prop("src", _src), " ", _props));
     }
 
-    function link(string memory _props) internal pure returns (string memory) {
+    function link_(string memory _props) internal pure returns (string memory) {
         return elProp("link", _props);
     }
 
     function input(string memory _props, string memory) internal pure returns (string memory) {
+        return elProp("input", _props);
+    }
+
+    function input_(string memory _props) internal pure returns (string memory) {
         return elProp("input", _props);
     }
 
@@ -55,7 +59,7 @@ library HTML {
         return el("script", _props, _children);
     }
 
-    function scriptExternal(string memory _src) internal pure returns (string memory) {
+    function scriptExternal_(string memory _src) internal pure returns (string memory) {
         return string.concat("<script ", prop("src", _src), "></script>");
     }
 

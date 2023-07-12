@@ -42,7 +42,7 @@ contract UIProvider {
     }
 }
 
-// we place the elements in a separate contracts to avoid the spurious dragon 
+// we place the elements in a separate contracts to avoid the spurious dragon
 
 contract PlaceCSS {
     using HTML for string;
@@ -376,7 +376,6 @@ contract PlaceScripts {
     }
 
     function _hexToRgb(script memory _script) internal pure {
-       
         arrowFn memory _hexToRgbFn;
 
         _hexToRgbFn.initializeNamedArgsArrowFn(ArrowFn.Const, "hexToRgb", "hex");
@@ -397,15 +396,11 @@ contract PlaceScripts {
         _distanceFn.initializeNamedArgsArrowFn(ArrowFn.Const, "distance", "a, b");
         _distanceFn.openBodyArrowFn();
         _distanceFn.appendArrowFn(
-            string.concat(
-                "Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2) + Math.pow(a[2] - b[2], 2));"
-            )
+            string.concat("Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2) + Math.pow(a[2] - b[2], 2));")
         );
         _distanceFn.closeBodyArrowFn();
 
         _script.scriptContent = LibString.concat(_script.scriptContent, _distanceFn.readArrowFn());
-
-
     }
 
     function _nearestColor(script memory _script) internal pure {
@@ -413,8 +408,12 @@ contract PlaceScripts {
 
         _nearestColorFn.initializeNamedArgsArrowFn(ArrowFn.Const, "nearestColor", "colorHex");
         _nearestColorFn.openBodyArrowFn();
-            _nearestColorFn.appendArrowFn("state.colors.reduce((a, v, i, arr) => (a = distance(hexToRgb(colorHex), hexToRgb(v)) < a[0] ? [");
-            _nearestColorFn.appendArrowFn("distance(hexToRgb(colorHex), hexToRgb(v)), v ] : a), [Number.POSITIVE_INFINITY, state.colors[0]])[1];");
+        _nearestColorFn.appendArrowFn(
+            "state.colors.reduce((a, v, i, arr) => (a = distance(hexToRgb(colorHex), hexToRgb(v)) < a[0] ? ["
+        );
+        _nearestColorFn.appendArrowFn(
+            "distance(hexToRgb(colorHex), hexToRgb(v)), v ] : a), [Number.POSITIVE_INFINITY, state.colors[0]])[1];"
+        );
         _nearestColorFn.closeBodyArrowFn();
 
         _script.scriptContent = LibString.concat(_script.scriptContent, _nearestColorFn.readArrowFn());
@@ -435,10 +434,12 @@ contract PlaceScripts {
 
         _setColorsFn.initializeNamedArrowFn(ArrowFn.Const, "setColors");
         _setColorsFn.openBodyArrowFn();
-            _setColorsFn.appendArrowFn(string.concat('const currentPixels = "', LibString.toHexStringNoPrefix(_pixels), '";'));
-            _setColorsFn.appendArrowFn(
-                _forLoop("i", "currentPixels.length", "state.indexedColors.push('#' + currentPixels.slice(i, i + 6));")
-            );
+        _setColorsFn.appendArrowFn(
+            string.concat('const currentPixels = "', LibString.toHexStringNoPrefix(_pixels), '";')
+        );
+        _setColorsFn.appendArrowFn(
+            _forLoop("i", "currentPixels.length", "state.indexedColors.push('#' + currentPixels.slice(i, i + 6));")
+        );
         _setColorsFn.closeBodyArrowFn();
 
         _script.scriptContent = LibString.concat(_script.scriptContent, _setColorsFn.readArrowFn());
@@ -450,22 +451,22 @@ contract PlaceScripts {
         _asyncSetPixelStateFn.initializeNamedFn("setPixelState");
         _asyncSetPixelStateFn.asyncFn();
         _asyncSetPixelStateFn.openBodyFn();
-            _asyncSetPixelStateFn.appendFn("const pixelCanvas = state.canvasArea;");
-            _asyncSetPixelStateFn.appendFn("const ctx = state.context;");
-            _asyncSetPixelStateFn.appendFn(
-                _forLoop(
-                    "idx",
-                    "state.indexedColors.length",
-                    "2",
-                    string.concat(
-                        "const colorIndex = parseInt(state.indexedColors[idx], 16);",
-                        "const x = idx % 512;",
-                        "const y = Math.floor(idx / 512);",
-                        "ctx.fillStyle = state.colors[colorIndex];",
-                        "ctx.fillRect(x * state.gridSize, y * state.gridSize, 1 * state.gridSize, 1 * state.gridSize);"
-                    )
+        _asyncSetPixelStateFn.appendFn("const pixelCanvas = state.canvasArea;");
+        _asyncSetPixelStateFn.appendFn("const ctx = state.context;");
+        _asyncSetPixelStateFn.appendFn(
+            _forLoop(
+                "idx",
+                "state.indexedColors.length",
+                "2",
+                string.concat(
+                    "const colorIndex = parseInt(state.indexedColors[idx], 16);",
+                    "const x = idx % 512;",
+                    "const y = Math.floor(idx / 512);",
+                    "ctx.fillStyle = state.colors[colorIndex];",
+                    "ctx.fillRect(x * state.gridSize, y * state.gridSize, 1 * state.gridSize, 1 * state.gridSize);"
                 )
-            );
+            )
+        );
 
         _asyncSetPixelStateFn.closeBodyFn();
 
@@ -477,13 +478,11 @@ contract PlaceScripts {
 
         _getDeltaFn.initializeNamedFn("getDelta");
         _getDeltaFn.openBodyFn();
-            _getDeltaFn.appendFn('console.log("state.changes:", state.changes);');
+        _getDeltaFn.appendFn('console.log("state.changes:", state.changes);');
         _getDeltaFn.closeBodyFn();
 
         _script.scriptContent = string.concat(
-            _script.scriptContent, 
-            "mintButton.addEventListener('click', getDelta);",
-            _getDeltaFn.readFn()
+            _script.scriptContent, "mintButton.addEventListener('click', getDelta);", _getDeltaFn.readFn()
         );
     }
 
@@ -492,22 +491,21 @@ contract PlaceScripts {
         _getDelta(_script);
     }
 
-
     function _getColorPickerEventListerns(script memory _script) internal pure {
         fn memory _getColorPickerEventListernsFn;
 
         _getColorPickerEventListernsFn.initializeArgsFn("event");
         _getColorPickerEventListernsFn.openBodyFn();
-            _getColorPickerEventListernsFn.appendFn("const selectedColor = event.target.value;");
-            _getColorPickerEventListernsFn.appendFn("if (selectedColor) {");
-                _getColorPickerEventListernsFn.appendFn("state.activeColor = nearestColor(selectedColor);}");
+        _getColorPickerEventListernsFn.appendFn("const selectedColor = event.target.value;");
+        _getColorPickerEventListernsFn.appendFn("if (selectedColor) {");
+        _getColorPickerEventListernsFn.appendFn("state.activeColor = nearestColor(selectedColor);}");
         _getColorPickerEventListernsFn.closeBodyFn();
         _getColorPickerEventListernsFn.appendFn(");");
 
         string memory _baseColorPicker = _getColorPickerEventListernsFn.readFn();
 
         _script.scriptContent = string.concat(
-            _script.scriptContent, 
+            _script.scriptContent,
             LibString.concat("colorPicker.addEventListener('change', ", _baseColorPicker),
             LibString.concat("colorPicker.addEventListener('input', ", _baseColorPicker)
         );
@@ -544,43 +542,39 @@ contract PlaceScripts {
             state.zoomLevel
         })`;
     }
-});
+        });
         */
         fn memory _getMousedownFn;
 
         _getMousedownFn.initializeArgsFn("event");
         _getMousedownFn.prependFn("pixelArtArea.addEventListener('mousedown', ");
         _getMousedownFn.openBodyFn();
-            _getMousedownFn.appendFn("if (event.button == 0) {");
-                _getMousedownFn.appendFn("state.isLeftMouseDown = true;");
-                _getMousedownFn.appendFn("if (state.currentStep === null || state.isStepComplete) {");
-                    _getMousedownFn.appendFn("state.currentStep = {changes: [], erasures: []};");
-                    _getMousedownFn.appendFn("state.isStepComplete = false;}");
-                _getMousedownFn.appendFn("handlePixelColor(event);");
-            _getMousedownFn.appendFn("} else if (event.button == 2) {");
-                _getMousedownFn.appendFn("state.isRightMouseDown = true;");
-                _getMousedownFn.appendFn("state.dragStartX = event.clientX;");
-                _getMousedownFn.appendFn("state.dragStartY = event.clientY;");
-                _getMousedownFn.appendFn("state.dragOffsetX = state.dragStartX - pixelArtArea.offsetLeft;");
-                _getMousedownFn.appendFn("state.dragOffsetY = state.dragStartY - pixelArtArea.offsetTop;");
-            _getMousedownFn.appendFn("} else if (event.button == 1) {");
-                _getMousedownFn.appendFn("state.dragStartX = 0;");
-                _getMousedownFn.appendFn("state.dragStartY = 0;");
-                _getMousedownFn.appendFn("state.dragOffsetX = 0;");
-                _getMousedownFn.appendFn("state.dragOffsetY = 0;");
-                _getMousedownFn.appendFn("state.zoomLevel = 1;");
-                _getMousedownFn.appendFn("state.cursorSize = 1;");
-                _getMousedownFn.appendFn("pixelArtArea.style.transformOrigin = '100}% 100}%';");
-                _getMousedownFn.appendFn("pixelArtArea.style.transform = `scale(${ state.zoomLevel })`;}");
+        _getMousedownFn.appendFn("if (event.button == 0) {");
+        _getMousedownFn.appendFn("state.isLeftMouseDown = true;");
+        _getMousedownFn.appendFn("if (state.currentStep === null || state.isStepComplete) {");
+        _getMousedownFn.appendFn("state.currentStep = {changes: [], erasures: []};");
+        _getMousedownFn.appendFn("state.isStepComplete = false;}");
+        _getMousedownFn.appendFn("handlePixelColor(event);");
+        _getMousedownFn.appendFn("} else if (event.button == 2) {");
+        _getMousedownFn.appendFn("state.isRightMouseDown = true;");
+        _getMousedownFn.appendFn("state.dragStartX = event.clientX;");
+        _getMousedownFn.appendFn("state.dragStartY = event.clientY;");
+        _getMousedownFn.appendFn("state.dragOffsetX = state.dragStartX - pixelArtArea.offsetLeft;");
+        _getMousedownFn.appendFn("state.dragOffsetY = state.dragStartY - pixelArtArea.offsetTop;");
+        _getMousedownFn.appendFn("} else if (event.button == 1) {");
+        _getMousedownFn.appendFn("state.dragStartX = 0;");
+        _getMousedownFn.appendFn("state.dragStartY = 0;");
+        _getMousedownFn.appendFn("state.dragOffsetX = 0;");
+        _getMousedownFn.appendFn("state.dragOffsetY = 0;");
+        _getMousedownFn.appendFn("state.zoomLevel = 1;");
+        _getMousedownFn.appendFn("state.cursorSize = 1;");
+        _getMousedownFn.appendFn("pixelArtArea.style.transformOrigin = '100}% 100}%';");
+        _getMousedownFn.appendFn("pixelArtArea.style.transform = `scale(${ state.zoomLevel })`;}");
         _getMousedownFn.closeBodyFn();
         _getMousedownFn.appendFn(");");
 
-        _script.scriptContent = string.concat(
-            _script.scriptContent, 
-            _getMousedownFn.readFn()
-        );
+        _script.scriptContent = string.concat(_script.scriptContent, _getMousedownFn.readFn());
     }
-
 
     function _getMoustEventListerns(script memory _script) internal pure {
         _getMousedown(_script);
@@ -599,7 +593,7 @@ contract PlaceScripts {
         _getArrowFns(_script);
         _getFunctions(_script);
         _getEventListerns(_script);
-        
+
         _page.script_(_script.scriptContent);
     }
 }

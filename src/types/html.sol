@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {LibString, ExtLibString} from "../utils/ExtLibString.sol";
-import {StructPacker} from "../utils/StructPacker.sol";
+import {FunctionCoder} from "../utils/FunctionCoder.sol";
 
 struct childCallback {
     string prop;
@@ -15,47 +15,79 @@ struct childCallback_ {
     function (string memory) pure returns (string memory) callback;
 }
 
-struct Callback {
-    string prop;
-    bytes child;
-    bytes32 callbackFn;
-}
-
 struct html {
     string head;
     string body;
 }
 
-struct nesting {
-    string nestingContent;
-    uint256 currentNestingLevel;
+struct Callback {
+    string[] inputs; // inputs for this level (ordering level _tag > _props > _children)
+    bytes32 callbackFn; // HTML coding function for this level
+    bytes[] children; // encoded (nested) children. Must be initialized before use.
+    string decoded; // decoded result of this level
 }
 
 /* HTML NESTING OPERATIONS */
 
-function readNesting(nesting memory _nesting) pure returns (string memory) {
-    if (_nesting.currentNestingLevel > 0) {
-        return string.concat(
-            _nesting.nestingContent,
-            "...error: nesting not closed ",
-            LibString.toString(_nesting.currentNestingLevel),
-            "levels left"
-        );
+function addToNest(Callback memory _parentCallback, uint256 childIndex, Callback memory _childCallback) pure {
+    _parentCallback.children[childIndex] = abi.encode(_childCallback);
+}
+
+function _hasChildren(Callback memory _callback) pure returns (bool) {
+    return _callback.children.length > 0;
+}
+
+function _getDecodeFnResult(Callback memory _callback) pure {
+    
+    
+    if (_callback.inputs.length == 1) {
+        _callback.decoded = FunctionCoder.decode(_callback.callbackFn, _callback.inputs[0]);
+    } else if (_callback.inputs.length == 2) {
+        _callback.decoded = FunctionCoder.decode(_callback.callbackFn, _callback.inputs[0], _callback.inputs[1]);
+    } else if (_callback.inputs.length == 3) {
+        _callback.decoded =  FunctionCoder.decode(_callback.callbackFn, _callback.inputs[0], _callback.inputs[1], _callback.inputs[2]);
+    } else {
+        _callback.decoded =  "Err: could not decode function result";
     }
-    return _nesting.nestingContent;
 }
 
-function addToNest(nesting memory _nesting, string memory _nestingContent, bool indent) pure {
-    if (indent) _nesting.currentNestingLevel++;
-    _nesting.nestingContent = LibString.concat(_nesting.nestingContent, _nestingContent);
+function _stringLen(string memory _str) pure returns (uint256) {
+    uint256 len;
+    assembly {
+        len := mload(_str)
+    }
+    return len;
 }
 
-function closeNestLevel(nesting memory _nesting, string memory _tag) pure {
-    _nesting.currentNestingLevel--;
-    _nesting.nestingContent = string.concat(_nesting.nestingContent, "</", _tag, ">");
+function _stepIntoChild(Callback memory _callback) pure {
+    if (!_hasChildren(_callback)) {
+        //when we step in and there are no children, we can write the result back to the decoded string
+        _getDecodeFnResult(_callback);
+    } else {
+        for (uint256 i = 0; i < _callback.children.length; i++) {
+            Callback memory _child = abi.decode(_callback.children[i], (Callback));
+            _stepIntoChild(_child);
+            //if the child has decoded content, we need to add it to the current level's inputs
+            if (_stringLen(_child.decoded) != 0) {
+                _callback.decoded = LibString.concat(_callback.decoded, _child.decoded);
+            }
+        }
+
+        uint256 input_position = _callback.inputs.length - 1;
+
+        _callback.inputs[input_position] = LibString.concat(_callback.inputs[input_position], _callback.decoded);
+
+        _getDecodeFnResult(_callback);
+    }
 }
 
-using {readNesting, addToNest, closeNestLevel} for nesting global;
+function readNest(Callback memory _callback) pure returns (string memory result) {
+    _stepIntoChild(_callback);
+
+    return _callback.decoded;
+}
+
+using {addToNest, readNest} for Callback global;
 
 /* HTML STRUCTURE OPERATIONS */
 function read(html memory _html) pure returns (string memory) {

@@ -173,10 +173,8 @@ contract ScratchTest is Test {
         }
 
         emit log_named_bytes32("_fn3", _fn3);
-
-
     }
-    
+
     function basic1() internal pure returns (string memory) {
         return "return from basic1";
     }
@@ -200,8 +198,10 @@ contract ScratchTest is Test {
         emit log_named_bytes32("callbackRet.callbackFn", callbackRet.callbackFn);
         emit log_named_string("callbackRet.callbackFn", _decodeFn(callbackRet.callbackFn)());
 
+        bytes[] memory childrenCallbacks2 = new bytes[](1);
+        childrenCallbacks2[0] = testCallback;
 
-        Callback memory callback2 = Callback("prop", "child", _encodeFn(basic2), childrenCallbacks);
+        Callback memory callback2 = Callback("prop", "child", _encodeFn(basic2), childrenCallbacks2);
 
         bytes memory testCallback2 = abi.encode(callback2);
 
@@ -213,6 +213,13 @@ contract ScratchTest is Test {
         emit log_named_string("callbackRet2.child", callbackRet2.child);
         emit log_named_bytes32("callbackRet2.callbackFn", callbackRet2.callbackFn);
         emit log_named_string("callbackRet2.callbackFn", _decodeFn(callbackRet2.callbackFn)());
+
+        Callback memory callbackRet_1 = abi.decode(callbackRet2.childrenCallbacks[0], (Callback));
+
+        emit log_named_string("callbackRet_1.prop", callbackRet_1.prop);
+        emit log_named_string("callbackRet_1.child", callbackRet_1.child);
+        emit log_named_bytes32("callbackRet_1.callbackFn", callbackRet_1.callbackFn);
+        emit log_named_string("callbackRet_1.callbackFn", _decodeFn(callbackRet_1.callbackFn)());
     }
 
     /*
