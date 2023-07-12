@@ -129,6 +129,92 @@ contract ScratchTest is Test {
         //emit log_named_string("testCallback.callback", testCallback.callback());
     }
 
+    struct Callback {
+        string prop;
+        string child;
+        bytes32 callbackFn;
+        bytes[] childrenCallbacks;
+    }
+
+    function _encodeFn(function () pure returns (string memory) fn) internal pure returns (bytes32 ret) {
+        assembly {
+            ret := fn
+        }
+    }
+
+    function _decodeFn(bytes32 fn) internal pure returns (function () pure returns (string memory) ret) {
+        assembly {
+            ret := fn
+        }
+    }
+
+    function testEmptyFn() public {
+        function () pure returns (string memory) fn;
+        function () pure returns (string memory) fn2;
+        function (string memory) pure returns (string memory) fn3;
+        bytes32 _fn;
+        bytes32 _fn2;
+        bytes32 _fn3;
+
+        assembly {
+            _fn := fn
+        }
+
+        emit log_named_bytes32("_fn", _fn);
+
+        assembly {
+            _fn2 := fn2
+        }
+
+        emit log_named_bytes32("_fn2", _fn2);
+
+        assembly {
+            _fn3 := fn3
+        }
+
+        emit log_named_bytes32("_fn3", _fn3);
+
+
+    }
+    
+    function basic1() internal pure returns (string memory) {
+        return "return from basic1";
+    }
+
+    function basic2() internal pure returns (string memory) {
+        return "return from basic2";
+    }
+
+    function testFunctionWrite() public {
+        bytes[] memory childrenCallbacks = new bytes[](2);
+        Callback memory callback = Callback("prop", "child", _encodeFn(basic1), childrenCallbacks);
+
+        bytes memory testCallback = abi.encode(callback);
+
+        emit log_named_bytes("testCallback", testCallback);
+
+        Callback memory callbackRet = abi.decode(testCallback, (Callback));
+
+        emit log_named_string("callbackRet.prop", callbackRet.prop);
+        emit log_named_string("callbackRet.child", callbackRet.child);
+        emit log_named_bytes32("callbackRet.callbackFn", callbackRet.callbackFn);
+        emit log_named_string("callbackRet.callbackFn", _decodeFn(callbackRet.callbackFn)());
+
+
+        Callback memory callback2 = Callback("prop", "child", _encodeFn(basic2), childrenCallbacks);
+
+        bytes memory testCallback2 = abi.encode(callback2);
+
+        emit log_named_bytes("testCallback2", testCallback2);
+
+        Callback memory callbackRet2 = abi.decode(testCallback2, (Callback));
+
+        emit log_named_string("callbackRet2.prop", callbackRet2.prop);
+        emit log_named_string("callbackRet2.child", callbackRet2.child);
+        emit log_named_bytes32("callbackRet2.callbackFn", callbackRet2.callbackFn);
+        emit log_named_string("callbackRet2.callbackFn", _decodeFn(callbackRet2.callbackFn)());
+    }
+
     /*
 
     function _getRecursive(html memory _page) internal pure {

@@ -15,6 +15,12 @@ struct childCallback_ {
     function (string memory) pure returns (string memory) callback;
 }
 
+struct Callback {
+    string prop;
+    bytes child;
+    bytes32 callbackFn;
+}
+
 struct html {
     string head;
     string body;

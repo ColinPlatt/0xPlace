@@ -11,30 +11,40 @@ import {HTML} from "./utils/HTML.sol";
 contract UIProvider {
     using HTML for string;
 
-    function _getBody(html memory _page, bytes memory _pixels) internal pure {
-        PlaceBody._getInfoDiv(_page);
-        PlaceBody._getContainer(_page);
-        PlaceScripts._getScripts(_page, _pixels);
+    PlaceBody public placeBody;
+    PlaceCSS public placeCSS;
+    PlaceScripts public placeScripts;
+
+    constructor() {
+        placeBody = new PlaceBody();
+        placeCSS = new PlaceCSS();
+        placeScripts = new PlaceScripts();
     }
 
-    function _getPage(html memory _page, bytes memory _pixels) internal pure returns (string memory) {
+    function _getBody(html memory _page, bytes memory _pixels) internal view {
+        placeBody._getInfoDiv(_page);
+        placeBody._getContainer(_page);
+        placeScripts._getScripts(_page, _pixels);
+    }
+
+    function _getPage(html memory _page, bytes memory _pixels) internal view returns (string memory) {
         _page.title("0xPlace");
-        _page.style(PlaceCSS._getCSS());
+        _page.style(placeCSS._getCSS());
         _getBody(_page, _pixels);
 
         return _page.read();
     }
 
-    function renderUI(bytes memory pixels) external pure returns (string memory) {
+    function renderUI(bytes memory pixels) external view returns (string memory) {
         html memory page; // initialize a new html page
 
         return _getPage(page, pixels);
     }
 }
 
-// we place the elements in a separate library to make things more legible
+// we place the elements in a separate contracts to avoid the spurious dragon 
 
-library PlaceCSS {
+contract PlaceCSS {
     using HTML for string;
 
     function _getButtonCSS(css memory _style) private pure {
@@ -121,7 +131,7 @@ library PlaceCSS {
         );
     }
 
-    function _getCSS() internal pure returns (string memory) {
+    function _getCSS() public pure returns (string memory) {
         css memory style;
 
         _getMainCSS(style);
@@ -158,10 +168,10 @@ library PlaceCSS {
     }
 }
 
-library PlaceBody {
+contract PlaceBody {
     using HTML for string;
 
-    function _getInfoDiv(html memory _page) internal pure {
+    function _getInfoDiv(html memory _page) public pure {
         childCallback_[] memory infoChildren = new childCallback_[](2);
 
         infoChildren[0] = childCallback_("0xPlace", HTML.h2_);
@@ -173,7 +183,7 @@ library PlaceBody {
         _page.divChildren_(string("id").prop("info"), infoChildren);
     }
 
-    function _getContainer(html memory _page) internal pure {
+    function _getContainer(html memory _page) public pure {
         childCallback[] memory colorSelectorChildren = new childCallback[](2);
 
         colorSelectorChildren[0] =
@@ -202,7 +212,7 @@ library PlaceBody {
     }
 }
 
-library PlaceScripts {
+contract PlaceScripts {
     using HTML for string;
 
     struct script {
@@ -581,7 +591,7 @@ library PlaceScripts {
         _getMoustEventListerns(_script);
     }
 
-    function _getScripts(html memory _page, bytes memory _pixels) internal pure {
+    function _getScripts(html memory _page, bytes memory _pixels) public pure {
         script memory _script;
 
         _stateVars(_script);
