@@ -219,7 +219,7 @@ contract PlaceScripts {
     function _stateVars(script memory _script) internal pure {
         _script.scriptContent = string.concat(
             _script.scriptContent,
-            'let state={config:{width:1024,height:1024,defaultColor:"#ffffff"},events:{mousedown:!1},colors:[],pixelArtArea:document.getElementById("pixel-art-area"),canvasArea:null,context:null,gridSize:2,currentStep:null,isStepComplete:!1,isLeftMouseDown:!1,isRightMouseDown:!1,dragStartX:0,dragStartY:0,dragOffsetX:0,dragOffsetY:0,zoomLevel:1,cursorSize:1,cursorHighlight:document.createElement("div"),indexedColors:"",mintButton:document.getElementById("mint-btn"),colorPicker:document.querySelector("#color-picker")};',
+            'let state={config:{width:1024,height:1024,defaultColor:"#ffffff"},events:{mousedown:!1},colors:[],pixelArtArea:document.getElementById("pixel-art-area"),canvasArea:null,context:{},gridSize:2,currentStep:null,isStepComplete:!1,isLeftMouseDown:!1,isRightMouseDown:!1,dragStartX:0,dragStartY:0,dragOffsetX:0,dragOffsetY:0,zoomLevel:1,cursorSize:1,cursorHighlight:document.createElement("div"),indexedColors:"",mintButton:document.getElementById("mint-btn"),colorPicker:document.querySelector("#color-picker")};',
             "const { config, pixelArtArea, cursorHighlight, mintButton, colorPicker } = state;"
         );
     }
@@ -287,6 +287,7 @@ contract PlaceScripts {
             )
         );
         _drawGridFn.closeBodyArrowFn();
+        _drawGridFn.appendArrowFn("drawGrid();");
 
         _script.scriptContent = LibString.concat(_script.scriptContent, _drawGridFn.readArrowFn());
     }
@@ -509,77 +510,226 @@ contract PlaceScripts {
     }
 
     function _getMousedown(script memory _script) internal pure {
-        /*
-        pixelArtArea.addEventListener('mousedown', function (event) {
-    if (event.button == 0) {
-        state.isLeftMouseDown = true;
-        if (state.currentStep === null || state.isStepComplete) {
-            state.currentStep = {
-                changes: [],
-                erasures: []
-            };
-            state.isStepComplete = false;
-        }
-        handlePixelColor(event);
-    } else if (event.button == 2) {
-        state.isRightMouseDown = true;
-        state.dragStartX = event.clientX;
-        state.dragStartY = event.clientY;
-        state.dragOffsetX = state.dragStartX - pixelArtArea.offsetLeft;
-        state.dragOffsetY = state.dragStartY - pixelArtArea.offsetTop;
-    } else if (event.button == 1) {
-        state.dragStartX = 0;
-        state.dragStartY = 0;
-        state.dragOffsetX = 0;
-        state.dragOffsetY = 0;
-        state.zoomLevel = 1;
-        state.cursorSize = 1;
-        pixelArtArea.style.transformOrigin = '100}% 100}%';
-        pixelArtArea.style.transform = `scale(${
-            state.zoomLevel
-        })`;
-    }
-        });
-        */
         fn memory _getMousedownFn;
 
         _getMousedownFn.initializeArgsFn("event");
         _getMousedownFn.prependFn("pixelArtArea.addEventListener('mousedown', ");
-        _getMousedownFn.openBodyFn();
-        _getMousedownFn.appendFn("if (event.button == 0) {");
-        _getMousedownFn.appendFn("state.isLeftMouseDown = true;");
-        _getMousedownFn.appendFn("if (state.currentStep === null || state.isStepComplete) {");
-        _getMousedownFn.appendFn("state.currentStep = {changes: [], erasures: []};");
-        _getMousedownFn.appendFn("state.isStepComplete = false;}");
-        _getMousedownFn.appendFn("handlePixelColor(event);");
-        _getMousedownFn.appendFn("} else if (event.button == 2) {");
-        _getMousedownFn.appendFn("state.isRightMouseDown = true;");
-        _getMousedownFn.appendFn("state.dragStartX = event.clientX;");
-        _getMousedownFn.appendFn("state.dragStartY = event.clientY;");
-        _getMousedownFn.appendFn("state.dragOffsetX = state.dragStartX - pixelArtArea.offsetLeft;");
-        _getMousedownFn.appendFn("state.dragOffsetY = state.dragStartY - pixelArtArea.offsetTop;");
-        _getMousedownFn.appendFn("} else if (event.button == 1) {");
-        _getMousedownFn.appendFn("state.dragStartX = 0;");
-        _getMousedownFn.appendFn("state.dragStartY = 0;");
-        _getMousedownFn.appendFn("state.dragOffsetX = 0;");
-        _getMousedownFn.appendFn("state.dragOffsetY = 0;");
-        _getMousedownFn.appendFn("state.zoomLevel = 1;");
-        _getMousedownFn.appendFn("state.cursorSize = 1;");
-        _getMousedownFn.appendFn("pixelArtArea.style.transformOrigin = '100}% 100}%';");
-        _getMousedownFn.appendFn("pixelArtArea.style.transform = `scale(${ state.zoomLevel })`;}");
-        _getMousedownFn.closeBodyFn();
+            _getMousedownFn.openBodyFn();
+                _getMousedownFn.appendFn("if (event.button == 0) {");
+                _getMousedownFn.appendFn("state.isLeftMouseDown = true;");
+                _getMousedownFn.appendFn("if (state.currentStep === null || state.isStepComplete) {");
+                _getMousedownFn.appendFn("state.currentStep = {changes: [], erasures: []};");
+                _getMousedownFn.appendFn("state.isStepComplete = false;}");
+                _getMousedownFn.appendFn("handlePixelColor(event);");
+                _getMousedownFn.appendFn("} else if (event.button == 2) {");
+                _getMousedownFn.appendFn("state.isRightMouseDown = true;");
+                _getMousedownFn.appendFn("state.dragStartX = event.clientX;");
+                _getMousedownFn.appendFn("state.dragStartY = event.clientY;");
+                _getMousedownFn.appendFn("state.dragOffsetX = state.dragStartX - pixelArtArea.offsetLeft;");
+                _getMousedownFn.appendFn("state.dragOffsetY = state.dragStartY - pixelArtArea.offsetTop;");
+                _getMousedownFn.appendFn("} else if (event.button == 1) {");
+                _getMousedownFn.appendFn("state.dragStartX = 0;");
+                _getMousedownFn.appendFn("state.dragStartY = 0;");
+                _getMousedownFn.appendFn("state.dragOffsetX = 0;");
+                _getMousedownFn.appendFn("state.dragOffsetY = 0;");
+                _getMousedownFn.appendFn("state.zoomLevel = 1;");
+                _getMousedownFn.appendFn("state.cursorSize = 1;");
+                _getMousedownFn.appendFn("pixelArtArea.style.transformOrigin = '100}% 100}%';");
+                _getMousedownFn.appendFn("pixelArtArea.style.transform = `scale(${ state.zoomLevel })`;}");
+            _getMousedownFn.closeBodyFn();
         _getMousedownFn.appendFn(");");
 
         _script.scriptContent = string.concat(_script.scriptContent, _getMousedownFn.readFn());
     }
 
-    function _getMoustEventListerns(script memory _script) internal pure {
+
+
+    function _getMouseUp(script memory _script) internal pure {
+        fn memory _getMouseupFn;
+
+        _getMouseupFn.initializeArgsFn("event");
+        _getMouseupFn.prependFn("pixelArtArea.addEventListener('mouseup', ");
+            _getMouseupFn.openBodyFn();
+                _getMouseupFn.appendFn("state.isLeftMouseDown = false;");
+                _getMouseupFn.appendFn("state.isRightMouseDown = false;");
+                _getMouseupFn.appendFn("if (event.button === 0) {");
+                _getMouseupFn.appendFn("state.isStepComplete = true;}");
+            _getMouseupFn.closeBodyFn();
+        _getMouseupFn.appendFn(");");
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getMouseupFn.readFn());
+    }
+
+    function _getMousemove(script memory _script) internal pure {
+
+        fn memory _getMousemoveFn;
+
+        _getMousemoveFn.initializeArgsFn("event");
+        _getMousemoveFn.prependFn("pixelArtArea.addEventListener('mousemove', ");
+            _getMousemoveFn.openBodyFn();
+                _getMousemoveFn.appendFn("if (state.isLeftMouseDown) {");
+                _getMousemoveFn.appendFn("handlePixelColor(event);");
+                _getMousemoveFn.appendFn("} else if (state.isRightMouseDown) {");
+                _getMousemoveFn.appendFn("const offsetX = event.clientX - state.dragStartX;");
+                _getMousemoveFn.appendFn("const offsetY = event.clientY - state.dragStartY;");
+                _getMousemoveFn.appendFn("const scrollX = (state.dragOffsetX - offsetX) / pixelArtArea.offsetWidth;");
+                _getMousemoveFn.appendFn("const scrollY = (state.dragOffsetY - offsetY) / pixelArtArea.offsetHeight;");
+                _getMousemoveFn.appendFn("pixelArtArea.style.transformOrigin = `${ scrollX * 100}% ${ scrollY * 100}%`;}");
+                _getMousemoveFn.appendFn("handleCursorHighlighting(event);");
+            _getMousemoveFn.closeBodyFn();
+        _getMousemoveFn.appendFn(");");
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getMousemoveFn.readFn());
+    }
+
+    function _getMouseleave(script memory _script) internal pure {
+        fn memory _getMouseleaveFn;
+
+        _getMouseleaveFn.initializeArgsFn("event");
+        _getMouseleaveFn.prependFn("pixelArtArea.addEventListener('mouseleave', ");
+            _getMouseleaveFn.openBodyFn();
+                _getMouseleaveFn.appendFn("state.isLeftMouseDown = false;");
+                _getMouseleaveFn.appendFn("state.isRightMouseDown = false;");
+            _getMouseleaveFn.closeBodyFn();
+        _getMouseleaveFn.appendFn(");");
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getMouseleaveFn.readFn());
+    }
+
+
+    function _getWheel(script memory _script) internal pure {
+        fn memory _getWheelFn;
+
+        _getWheelFn.initializeArgsFn("event");
+        _getWheelFn.prependFn("pixelArtArea.addEventListener('wheel', ");
+            _getWheelFn.openBodyFn();
+                _getWheelFn.appendFn("const zoomSpeed = 0.1;");
+                _getWheelFn.appendFn("if (event.deltaY < 0) {");
+                _getWheelFn.appendFn("state.zoomLevel = Math.min(state.zoomLevel + zoomSpeed, 10);");
+                _getWheelFn.appendFn("} else {");
+                _getWheelFn.appendFn("state.zoomLevel = Math.max(state.zoomLevel - zoomSpeed, 1);");
+                _getWheelFn.appendFn("}");
+                _getWheelFn.appendFn("const rect = pixelArtArea.getBoundingClientRect();");
+                _getWheelFn.appendFn("const cursorX = event.clientX - rect.left;");
+                _getWheelFn.appendFn("const cursorY = event.clientY - rect.top;");
+                _getWheelFn.appendFn("const scrollX = cursorX / pixelArtArea.offsetWidth;");
+                _getWheelFn.appendFn("const scrollY = cursorY / pixelArtArea.offsetHeight;");
+                _getWheelFn.appendFn("pixelArtArea.style.transformOrigin = `${ scrollX * 100}% ${ scrollY * 100}%`;");
+                _getWheelFn.appendFn("pixelArtArea.style.transform = `scale(${ state.zoomLevel })`;");
+                _getWheelFn.appendFn("event.preventDefault();");
+            _getWheelFn.closeBodyFn();
+        _getWheelFn.appendFn(");");
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getWheelFn.readFn());
+    }
+
+    function _getMouseEventListerns(script memory _script) internal pure {
         _getMousedown(_script);
+        _getMouseUp(_script);
+        _getMousemove(_script);
+        _getMouseleave(_script);
+        _getWheel(_script);
+
+    }
+
+    function _getKeydown(script memory _script) internal pure {
+        fn memory _getKeydownFn;
+
+        _getKeydownFn.initializeArgsFn("event");
+        _getKeydownFn.prependFn("window.addEventListener('keydown', ");
+            _getKeydownFn.openBodyFn();
+                _getKeydownFn.appendFn("if (event.key === '+') {");
+                _getKeydownFn.appendFn("state.cursorSize = Math.min(state.cursorSize + 1, 32);");
+                _getKeydownFn.appendFn("handleCursorHighlighting(event);");
+                _getKeydownFn.appendFn("} else if (event.key === '-') {");
+                _getKeydownFn.appendFn("state.cursorSize = Math.max(state.cursorSize - 1, 1);");
+                _getKeydownFn.appendFn("handleCursorHighlighting(event);}");
+            _getKeydownFn.closeBodyFn();
+        _getKeydownFn.appendFn(");");
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getKeydownFn.readFn());
+    }
+
+    function _getEraseBtnListern(script memory _script) internal pure {
+        fn memory _getEraseBtnFn;
+
+        _getEraseBtnFn.initializeArgsFn("event");
+            _getEraseBtnFn.prependFn("document.getElementById('eraser-btn').addEventListener('click', ");
+            _getEraseBtnFn.openBodyFn();
+                _getEraseBtnFn.appendFn("if (currentStep !== null && isStepComplete) {");
+                _getEraseBtnFn.appendFn("handleEraser();");
+                _getEraseBtnFn.appendFn("isStepComplete = false;}");
+            _getEraseBtnFn.closeBodyFn();
+        _getEraseBtnFn.appendFn(");");
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getEraseBtnFn.readFn());
     }
 
     function _getEventListerns(script memory _script) internal pure {
         _getColorPickerEventListerns(_script);
-        _getMoustEventListerns(_script);
+        _getMouseEventListerns(_script);
+        _getKeydown(_script);
+        _getEraseBtnListern(_script);
+    }
+
+    function _getHandleCursorHighlighting(script memory _script) internal pure {
+        fn memory _getHandleCursorHighlightingFn;
+
+        _getHandleCursorHighlightingFn.initializeNamedArgsFn("handleCursorHighlighting", "event");
+        _getHandleCursorHighlightingFn.openBodyFn();
+            _getHandleCursorHighlightingFn.appendFn("const rect = pixelArtArea.getBoundingClientRect();");
+            _getHandleCursorHighlightingFn.appendFn("const x = event.clientX + window.scrollX - rect.left;");
+            _getHandleCursorHighlightingFn.appendFn("const boxSize = state.cursorSize;");
+            _getHandleCursorHighlightingFn.appendFn("cursorHighlight.style.left = x + 'px';");
+            _getHandleCursorHighlightingFn.appendFn("cursorHighlight.style.top = event.clientY + 'px';");
+            _getHandleCursorHighlightingFn.appendFn("cursorHighlight.style.width = boxSize + 'px';");
+            _getHandleCursorHighlightingFn.appendFn("cursorHighlight.style.height = boxSize + 'px';");
+            _getHandleCursorHighlightingFn.appendFn("cursorHighlight.style.backgroundColor = state.activeColor;");
+            _getHandleCursorHighlightingFn.appendFn("cursorHighlight.style.borderColor = state.activeColor;");
+            _getHandleCursorHighlightingFn.appendFn("cursorHighlight.style.opacity = 0.5;");
+        _getHandleCursorHighlightingFn.closeBodyFn();
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getHandleCursorHighlightingFn.readFn());
+    }
+
+    function _getHandlers(script memory _script) internal pure {
+        _script.scriptContent = LibString.concat(_script.scriptContent, 'let changes = [];');
+        _getHandleCursorHighlighting(_script);
+    }
+
+    function _getRandomIntFromInterval(script memory _script) internal pure {
+        fn memory _getRandomIntFromIntervalFn;
+
+        _getRandomIntFromIntervalFn.initializeNamedArgsFn("randomIntFromInterval", "min, max");
+        _getRandomIntFromIntervalFn.openBodyFn();
+            _getRandomIntFromIntervalFn.appendFn("return Math.floor(Math.random() * (max - min + 1) + min);");
+        _getRandomIntFromIntervalFn.closeBodyFn();
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getRandomIntFromIntervalFn.readFn());
+    }
+
+    function _getSetTestColors(script memory _script) internal pure {
+        arrowFn memory _getSetTestColorsFn;
+
+        _getSetTestColorsFn.initializeNamedArrowFn(ArrowFn.Const, "setTestColors");
+        _getSetTestColorsFn.openBodyArrowFn();
+            _getSetTestColorsFn.appendArrowFn(
+                _forLoop(
+                    'idx', 
+                    '(512*512)', 
+                    'state.indexedColors += randomIntFromInterval(0, 215).toString(16).padStart(2, "0");'
+                )
+            );
+        _getSetTestColorsFn.closeBodyArrowFn();
+
+        _script.scriptContent = string.concat(_script.scriptContent, _getSetTestColorsFn.readArrowFn());
+
+    }
+
+    function _getColorHelpers(script memory _script) internal pure {
+        _getRandomIntFromInterval(_script);
+        _getSetTestColors(_script);
+
     }
 
     function _getScripts(bytes memory _pixels) public pure returns (string memory) {
@@ -590,6 +740,8 @@ contract PlaceScripts {
         _getArrowFns(_script);
         _getFunctions(_script);
         _getEventListerns(_script);
+        _getHandlers(_script);
+        _getColorHelpers(_script);
 
         return _script.scriptContent;
     }

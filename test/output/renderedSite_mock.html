@@ -213,6 +213,8 @@
                 }
             });
 
+            // here
+
             pixelArtArea.addEventListener('mouseup', function (event) {
                 isLeftMouseDown = false;
                 isRightMouseDown = false;
@@ -282,6 +284,8 @@
                 }
             });
 
+            
+
             // Handle the erase button click event
             const eraseBtn = document.getElementById('eraser-btn');
             eraseBtn.addEventListener('click', function () {
@@ -290,6 +294,8 @@
                     isStepComplete = false;
                 }
             });
+
+            // here
 
             let changes = [];
 
@@ -368,6 +374,8 @@
                 ctx.fillRect(x * pixelSize, y * pixelSize, cursorSize, cursorSize);
                 handleChange(x, y, pixelSize, activeColor);
             }
+
+            // here
 
             function randomIntFromInterval(min, max) { // min and max included
                 return Math.floor(Math.random() * (max - min + 1) + min)
