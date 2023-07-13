@@ -203,7 +203,7 @@ library PlaceBody {
                 string.concat(
                     string("id").prop("pixel-art-area"),
                     string("oncontextmenu").prop("return false;")
-                ).callBackbuilder("Update", HTML.div, 0)
+                ).callBackbuilder(HTML.div_, 0)
             ).readNest()
         );
     }

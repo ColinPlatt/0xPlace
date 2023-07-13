@@ -31,6 +31,10 @@ library HTML {
         return el("div", _props, _children);
     }
 
+    function div_(string memory _props) internal pure returns (string memory) {
+        return elProp("div", _props);
+    }
+
     function textarea(string memory _props, string memory _children) internal pure returns (string memory) {
         return el("textarea", _props, _children);
     }

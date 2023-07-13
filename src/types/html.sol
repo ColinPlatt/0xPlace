@@ -159,9 +159,7 @@ function _getDecodeFnResult(Callback memory _callback) pure {
     }
 }
 
-function _getDecodeFnResult(Callback memory _parentCallback, Callback memory _childCallback) pure {
-    
-    uint256 input_position = _parentCallback.inputs.length - 1;
+function _getDecodeFnResult(Callback memory _minimalCallback, Callback memory _childCallback) pure {
 
     string memory result;    
 
@@ -175,7 +173,7 @@ function _getDecodeFnResult(Callback memory _parentCallback, Callback memory _ch
         result =  "Err: could not decode function result";
     }
 
-    _parentCallback.inputs[input_position] = LibString.concat(_parentCallback.inputs[input_position], result);
+    _minimalCallback.decoded = result;
 }
 
 
