@@ -30,7 +30,12 @@ struct Callback {
 /* HTML NESTING OPERATIONS */
 
 function addToNest(Callback memory _parentCallback, uint256 childIndex, Callback memory _childCallback) pure {
-    _parentCallback.children[childIndex] = abi.encode(_childCallback);
+    if(!_hasChildren(_childCallback)) {
+        _getDecodeFnResult(_parentCallback, _childCallback);
+        _parentCallback.children[childIndex] = abi.encode(0); // zero out child
+    } else {
+        _parentCallback.children[childIndex] = abi.encode(_childCallback);
+    }
 }
 
 function _hasChildren(Callback memory _callback) pure returns (bool) {
@@ -38,7 +43,6 @@ function _hasChildren(Callback memory _callback) pure returns (bool) {
 }
 
 function _getDecodeFnResult(Callback memory _callback) pure {
-    
     
     if (_callback.inputs.length == 1) {
         _callback.decoded = FunctionCoder.decode(_callback.callbackFn, _callback.inputs[0]);
@@ -51,6 +55,26 @@ function _getDecodeFnResult(Callback memory _callback) pure {
     }
 }
 
+function _getDecodeFnResult(Callback memory _parentCallback, Callback memory _childCallback) pure {
+    
+    uint256 input_position = _parentCallback.inputs.length - 1;
+
+    string memory result;    
+
+    if (_childCallback.inputs.length == 1) {
+        result = FunctionCoder.decode(_childCallback.callbackFn, _childCallback.inputs[0]);
+    } else if (_childCallback.inputs.length == 2) {
+        result = FunctionCoder.decode(_childCallback.callbackFn, _childCallback.inputs[0], _childCallback.inputs[1]);
+    } else if (_childCallback.inputs.length == 3) {
+        result =  FunctionCoder.decode(_childCallback.callbackFn, _childCallback.inputs[0], _childCallback.inputs[1], _childCallback.inputs[2]);
+    } else {
+        result =  "Err: could not decode function result";
+    }
+
+    _parentCallback.inputs[input_position] = LibString.concat(_parentCallback.inputs[input_position], result);
+}
+
+
 function _stringLen(string memory _str) pure returns (uint256) {
     uint256 len;
     assembly {
@@ -60,11 +84,8 @@ function _stringLen(string memory _str) pure returns (uint256) {
 }
 
 function _stepIntoChild(Callback memory _callback) pure {
-    if (!_hasChildren(_callback)) {
-        //when we step in and there are no children, we can write the result back to the decoded string
-        _getDecodeFnResult(_callback);
-    } else {
-        for (uint256 i = 0; i < _callback.children.length; i++) {
+    for (uint256 i = 0; i < _callback.children.length; i++) {
+        if(keccak256(_callback.children[i]) != keccak256(abi.encode(0))) {
             Callback memory _child = abi.decode(_callback.children[i], (Callback));
             _stepIntoChild(_child);
             //if the child has decoded content, we need to add it to the current level's inputs
@@ -72,13 +93,13 @@ function _stepIntoChild(Callback memory _callback) pure {
                 _callback.decoded = LibString.concat(_callback.decoded, _child.decoded);
             }
         }
-
-        uint256 input_position = _callback.inputs.length - 1;
-
-        _callback.inputs[input_position] = LibString.concat(_callback.inputs[input_position], _callback.decoded);
-
-        _getDecodeFnResult(_callback);
     }
+
+    uint256 input_position = _callback.inputs.length - 1;
+
+    _callback.inputs[input_position] = LibString.concat(_callback.inputs[input_position], _callback.decoded);
+
+    _getDecodeFnResult(_callback);
 }
 
 function readNest(Callback memory _callback) pure returns (string memory result) {
