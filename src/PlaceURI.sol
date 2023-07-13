@@ -21,7 +21,7 @@ contract UIProvider {
     function _getBody(html memory _page, bytes memory _pixels) internal view {
         PlaceBody._getInfoDiv(_page);
         PlaceBody._getContainer(_page);
-        _page.accept(placeScripts._getScripts(_page, _pixels));
+        _page.script_(placeScripts._getScripts(_pixels));
     }
 
     function _getPage(html memory _page, bytes memory _pixels) internal view returns (string memory) {
@@ -203,7 +203,7 @@ library PlaceBody {
                 string.concat(
                     string("id").prop("pixel-art-area"),
                     string("oncontextmenu").prop("return false;")
-                ).callBackbuilder(HTML.div_, 0)
+                ).callBackbuilder('', HTML.div, 0)
             ).readNest()
         );
     }
@@ -582,7 +582,7 @@ contract PlaceScripts {
         _getMoustEventListerns(_script);
     }
 
-    function _getScripts(html memory _page, bytes memory _pixels) public pure returns (html memory) {
+    function _getScripts(bytes memory _pixels) public pure returns (string memory) {
         script memory _script;
 
         _stateVars(_script);
@@ -591,8 +591,6 @@ contract PlaceScripts {
         _getFunctions(_script);
         _getEventListerns(_script);
 
-        _page.script_(_script.scriptContent);
-
-        return _page;
+        return _script.scriptContent;
     }
 }
