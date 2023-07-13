@@ -18,6 +18,56 @@ library nestDispatcher {
         return _parentCallback.addToNest_3(_lchildCallback, _mchildCallback, _rchildCallback);
     }
 
+    function addToNest(
+        Callback memory _parentCallback, 
+        Callback memory _1childCallback, 
+        Callback memory _2childCallback, 
+        Callback memory _3childCallback,
+        Callback memory _4childCallback
+    ) internal pure returns (Callback memory) {
+        return _parentCallback.addToNest_4(_1childCallback, _2childCallback, _3childCallback, _4childCallback);
+    }
+
+
+    function callBackbuilder(
+        string memory _props, 
+        string memory _children, 
+        function (string memory, string memory) pure returns (string memory) fn,
+        uint _childCount
+    ) internal pure returns (Callback memory) {
+        string[] memory _inputs = new string[](2);
+        _inputs[0] = _props;
+        _inputs[1] = _children;
+
+        return Callback(_inputs, FunctionCoder.encode(fn), new bytes[](_childCount), '');
+    }
+
+    function callBackbuilder(
+        string memory _children, 
+        function (string memory) pure returns (string memory) fn,
+        uint _childCount
+    ) internal pure returns (Callback memory) {
+        string[] memory _inputs = new string[](1);
+        _inputs[0] = _children;
+
+        return Callback(_inputs, FunctionCoder.encode(fn), new bytes[](_childCount), '');
+    }
+
+    function callBackbuilder(string memory _props, string memory _children, bytes32 fn, uint _childCount) internal pure returns (Callback memory) {
+        string[] memory _inputs = new string[](2);
+        _inputs[0] = _props;
+        _inputs[1] = _children;
+
+        return Callback(_inputs, fn, new bytes[](_childCount), '');
+    }
+
+    function callBackbuilder(string memory _children, bytes32 fn, uint _childCount) internal pure returns (Callback memory) {
+        string[] memory _inputs = new string[](1);
+        _inputs[0] = _children;
+
+        return Callback(_inputs, fn, new bytes[](_childCount), '');
+    }
+
 }
 
 struct html {
@@ -46,12 +96,7 @@ struct childCallback_ {
 /* HTML NESTING OPERATIONS */
 
 function _append(Callback memory parent, uint idx, Callback memory child) pure {
-    if(!_hasChildren(child)) {
-        _getDecodeFnResult(parent, child);
-        parent.children[idx] = abi.encode(0); // zero out child
-    } else {
-        parent.children[idx] = abi.encode(child);
-    }
+    parent.children[idx] = abi.encode(child);
 }
 
 function addToNest_1(Callback memory _parentCallback, Callback memory _childCallback) pure returns (Callback memory) {
@@ -79,6 +124,20 @@ function addToNest_3(
     _append(_parentCallback, 0, _lchildCallback);
     _append(_parentCallback, 1, _mchildCallback);
     _append(_parentCallback, 2, _rchildCallback);
+    return _parentCallback;
+}
+
+function addToNest_4(
+    Callback memory _parentCallback, 
+    Callback memory _1childCallback,
+    Callback memory _2childCallback, 
+    Callback memory _3childCallback,
+    Callback memory _4childCallback
+) pure returns (Callback memory) {
+    _append(_parentCallback, 0, _1childCallback);
+    _append(_parentCallback, 1, _2childCallback);
+    _append(_parentCallback, 2, _3childCallback);
+    _append(_parentCallback, 3, _4childCallback);
     return _parentCallback;
 }
 
@@ -129,22 +188,26 @@ function _stringLen(string memory _str) pure returns (uint256) {
 }
 
 function _stepIntoChild(Callback memory _callback) pure {
-    for (uint256 i = 0; i < _callback.children.length; i++) {
-        if(keccak256(_callback.children[i]) != keccak256(abi.encode(0))) {
-            Callback memory _child = abi.decode(_callback.children[i], (Callback));
-            _stepIntoChild(_child);
-            //if the child has decoded content, we need to add it to the current level's inputs
-            if (_stringLen(_child.decoded) != 0) {
-                _callback.decoded = LibString.concat(_callback.decoded, _child.decoded);
+    if(!_hasChildren(_callback)) {
+        _getDecodeFnResult(_callback);
+    } else {
+        for (uint256 i = 0; i < _callback.children.length; i++) {
+            if(keccak256(_callback.children[i]) != keccak256(abi.encode(0))) {
+                Callback memory _child = abi.decode(_callback.children[i], (Callback));
+                _stepIntoChild(_child);
+                //if the child has decoded content, we need to add it to the current level's inputs
+                if (_stringLen(_child.decoded) != 0) {
+                    _callback.decoded = LibString.concat(_callback.decoded, _child.decoded);
+                }
             }
         }
+
+        uint256 input_position = _callback.inputs.length - 1;
+
+        _callback.inputs[input_position] = LibString.concat(_callback.inputs[input_position], _callback.decoded);
+
+        _getDecodeFnResult(_callback);
     }
-
-    uint256 input_position = _callback.inputs.length - 1;
-
-    _callback.inputs[input_position] = LibString.concat(_callback.inputs[input_position], _callback.decoded);
-
-    _getDecodeFnResult(_callback);
 }
 
 function readNest(Callback memory _callback) pure returns (string memory result) {
@@ -153,7 +216,7 @@ function readNest(Callback memory _callback) pure returns (string memory result)
     return _callback.decoded;
 }
 
-using {addToNest_1, addToNest_2, addToNest_3, readNest} for Callback global;
+using {addToNest_1, addToNest_2, addToNest_3, addToNest_4, readNest} for Callback global;
 
 
 /* HTML STRUCTURE OPERATIONS */
@@ -171,6 +234,10 @@ function prependHead(html memory _html, string memory _head) pure {
 
 function appendBody(html memory _html, string memory _body) pure {
     _html.body = LibString.concat(_html.body, _body);
+}
+
+function accept(html memory _html, html memory _htmlUpdate) pure {
+    _html = _htmlUpdate;
 }
 
 function prependBody(html memory _html, string memory _body) pure {
@@ -418,7 +485,7 @@ function prop(string memory _key, string memory _val) pure returns (string memor
     return string.concat(_key, "=", '"', _val, '" ');
 }
 
-using {read, appendHead, prependHead, appendBody, prependBody} for html global;
+using {read, appendHead, prependHead, appendBody, prependBody, accept} for html global;
 
 using {
     title,

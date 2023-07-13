@@ -10,21 +10,18 @@ import {HTML} from "./utils/HTML.sol";
 
 contract UIProvider {
     using HTML for string;
-
-    PlaceBody public placeBody;
     PlaceCSS public placeCSS;
     PlaceScripts public placeScripts;
 
     constructor() {
-        placeBody = new PlaceBody();
         placeCSS = new PlaceCSS();
         placeScripts = new PlaceScripts();
     }
 
     function _getBody(html memory _page, bytes memory _pixels) internal view {
-        placeBody._getInfoDiv(_page);
-        placeBody._getContainer(_page);
-        placeScripts._getScripts(_page, _pixels);
+        PlaceBody._getInfoDiv(_page);
+        PlaceBody._getContainer(_page);
+        _page.accept(placeScripts._getScripts(_page, _pixels));
     }
 
     function _getPage(html memory _page, bytes memory _pixels) internal view returns (string memory) {
@@ -168,10 +165,12 @@ contract PlaceCSS {
     }
 }
 
-contract PlaceBody {
+library PlaceBody {
     using HTML for string;
+    using nestDispatcher for Callback;
+    using nestDispatcher for string;
 
-    function _getInfoDiv(html memory _page) public pure {
+    function _getInfoDiv(html memory _page) internal pure {
         childCallback_[] memory infoChildren = new childCallback_[](2);
 
         infoChildren[0] = childCallback_("0xPlace", HTML.h2_);
@@ -183,32 +182,30 @@ contract PlaceBody {
         _page.divChildren_(string("id").prop("info"), infoChildren);
     }
 
-    function _getContainer(html memory _page) public pure {
-        childCallback[] memory colorSelectorChildren = new childCallback[](2);
-
-        colorSelectorChildren[0] =
-            childCallback(string("style").prop("margin:1rem 0.25rem 0;"), "Select Colors:", HTML.p);
-        colorSelectorChildren[1] = childCallback(
-            string.concat(
-                string("type").prop("color"), string("id").prop("color-picker"), string("value").prop("#ffffff")
-            ),
-            "",
-            HTML.input
+    function _getContainer(html memory _page) internal pure {
+        _page.appendBody(
+            string("id").prop("container").callBackbuilder('', HTML.div, 2).addToNest(
+                string("id").prop("button-container").callBackbuilder('', HTML.div, 1).addToNest(
+                    string("id").prop("pixel-art-options").callBackbuilder('', HTML.div, 4).addToNest(
+                        string("id").prop("update-btn").callBackbuilder("Update", HTML.button, 0),
+                        string("id").prop("eraser-btn").callBackbuilder("Erase", HTML.button, 0),
+                        string("id").prop("color-selector-container").callBackbuilder('', HTML.div, 2).addToNest(
+                            string("style").prop("margin:1rem 0.25rem 0;").callBackbuilder("Select Color", HTML.p, 0),
+                            string.concat(
+                                string("type").prop("color"),
+                                string("id").prop("color-picker"),
+                                string("value").prop("#ffffff")
+                            ).callBackbuilder(HTML.input_, 0)
+                        ),
+                        string("id").prop("mint-btn").callBackbuilder("Mint", HTML.button, 0)
+                    )
+                ),
+                string.concat(
+                    string("id").prop("pixel-art-area"),
+                    string("oncontextmenu").prop("return false;")
+                ).callBackbuilder("Update", HTML.div, 0)
+            ).readNest()
         );
-
-        _page.divOpen(string("id").prop("container"));
-        _page.divOpen(string("id").prop("button-container"));
-        _page.divOpen(string("id").prop("pixel-art-options"));
-        _page.button(
-            string.concat(string("id").prop("update-btn"), string("onclick").prop("setPixelState()")), "Update"
-        );
-        _page.button(string("id").prop("eraser-btn"), "Erase");
-        _page.divChildren(string("id").prop("color-selector-container"), colorSelectorChildren);
-        _page.button(string("id").prop("mint-btn"), "Mint");
-        _page.divClose();
-        _page.divClose();
-        _page.div(string.concat(string("id").prop("pixel-art-area"), string("oncontextmenu").prop("return false;")), "");
-        _page.divClose();
     }
 }
 
@@ -585,7 +582,7 @@ contract PlaceScripts {
         _getMoustEventListerns(_script);
     }
 
-    function _getScripts(html memory _page, bytes memory _pixels) public pure {
+    function _getScripts(html memory _page, bytes memory _pixels) public pure returns (html memory) {
         script memory _script;
 
         _stateVars(_script);
@@ -595,5 +592,7 @@ contract PlaceScripts {
         _getEventListerns(_script);
 
         _page.script_(_script.scriptContent);
+
+        return _page;
     }
 }
