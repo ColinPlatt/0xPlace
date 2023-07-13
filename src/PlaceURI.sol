@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {WebSafeColors} from "./utils/WebSafeColors.sol";
 import "./types/vu3.sol";
 import {libBrowserProvider, libJsonRPCProvider} from "./utils/libBrowserProvider.sol";
-import {ExtLibString, LibString} from "./utils/ExtLibString.sol";
+import {LibString} from "lib/solady/src/Milady.sol";
 import {Base64} from "lib/solady/src/utils/Base64.sol";
 import {HTML} from "./utils/HTML.sol";
 

@@ -65,6 +65,6 @@ contract fnTest is Test {
         arrowFn memory newArrowfn;
         newArrowfn.initializeArrowFn();
         newArrowfn.bodyArrowFn("console.log('hello world');");
-        assertEq(newArrowfn.readArrowFn(), "() => {console.log('hello world');}");
+        assertEq(newArrowfn.readArrowFn(), "() => {console.log('hello world');};");
     }
 }

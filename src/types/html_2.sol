@@ -1,9 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {LibString, ExtLibString} from "../utils/ExtLibString.sol";
+import {LibString} from "lib/solady/src/Milady.sol";
 import {FunctionCoder} from "../utils/FunctionCoder.sol";
 
+library nestDispatcher {
+
+    function addToNest(Callback_2 memory _parentCallback_2, Callback_2 memory _childCallback_2) internal pure returns (Callback_2 memory) {
+        return _parentCallback_2.addToNest_1(_childCallback_2);
+    }
+
+    function addToNest(Callback_2 memory _parentCallback_2, Callback_2 memory _lchildCallback_2, Callback_2 memory _rchildCallback_2) internal pure returns (Callback_2 memory) {
+        return _parentCallback_2.addToNest_2(_lchildCallback_2, _rchildCallback_2);
+    }
+
+    function addToNest(Callback_2 memory _parentCallback_2, Callback_2 memory _lchildCallback_2, Callback_2 memory _mchildCallback_2, Callback_2 memory _rchildCallback_2) internal pure returns (Callback_2 memory) {
+        return _parentCallback_2.addToNest_3(_lchildCallback_2, _mchildCallback_2, _rchildCallback_2);
+    }
+
+}
 
 struct Callback_2 {
     string[] inputs; // inputs for this level (ordering level _tag > _props > _children)

@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {LibString, ExtLibString} from "../utils/ExtLibString.sol";
+import {LibString} from "lib/solady/src/Milady.sol";
 import {FunctionCoder} from "../utils/FunctionCoder.sol";
 
-struct childCallback {
-    string prop;
-    string child;
-    function (string memory, string memory) pure returns (string memory) callback;
-}
+library nestDispatcher {
 
-struct childCallback_ {
-    string prop;
-    function (string memory) pure returns (string memory) callback;
+    function addToNest(Callback memory _parentCallback, Callback memory _childCallback) internal pure returns (Callback memory) {
+        return _parentCallback.addToNest_1(_childCallback);
+    }
+
+    function addToNest(Callback memory _parentCallback, Callback memory _lchildCallback, Callback memory _rchildCallback) internal pure returns (Callback memory) {
+        return _parentCallback.addToNest_2(_lchildCallback, _rchildCallback);
+    }
+
+    function addToNest(Callback memory _parentCallback, Callback memory _lchildCallback, Callback memory _mchildCallback, Callback memory _rchildCallback) internal pure returns (Callback memory) {
+        return _parentCallback.addToNest_3(_lchildCallback, _mchildCallback, _rchildCallback);
+    }
+
 }
 
 struct html {
@@ -27,16 +32,56 @@ struct Callback {
     string decoded; // decoded result of this level
 }
 
+struct childCallback {
+    string prop;
+    string child;
+    function (string memory, string memory) pure returns (string memory) callback;
+}
+
+struct childCallback_ {
+    string prop;
+    function (string memory) pure returns (string memory) callback;
+}
+
 /* HTML NESTING OPERATIONS */
 
-function addToNest(Callback memory _parentCallback, uint256 childIndex, Callback memory _childCallback) pure {
-    if(!_hasChildren(_childCallback)) {
-        _getDecodeFnResult(_parentCallback, _childCallback);
-        _parentCallback.children[childIndex] = abi.encode(0); // zero out child
+function _append(Callback memory parent, uint idx, Callback memory child) pure {
+    if(!_hasChildren(child)) {
+        _getDecodeFnResult(parent, child);
+        parent.children[idx] = abi.encode(0); // zero out child
     } else {
-        _parentCallback.children[childIndex] = abi.encode(_childCallback);
+        parent.children[idx] = abi.encode(child);
     }
 }
+
+function addToNest_1(Callback memory _parentCallback, Callback memory _childCallback) pure returns (Callback memory) {
+    _append(_parentCallback, 0, _childCallback);
+    return _parentCallback;
+}
+
+
+function addToNest_2(
+    Callback memory _parentCallback, 
+    Callback memory _lchildCallback, 
+    Callback memory _rchildCallback
+) pure returns (Callback memory) {
+    _append(_parentCallback, 0, _lchildCallback);
+    _append(_parentCallback, 1, _rchildCallback);
+    return _parentCallback;
+}
+
+function addToNest_3(
+    Callback memory _parentCallback, 
+    Callback memory _lchildCallback,
+    Callback memory _mchildCallback, 
+    Callback memory _rchildCallback
+) pure returns (Callback memory) {
+    _append(_parentCallback, 0, _lchildCallback);
+    _append(_parentCallback, 1, _mchildCallback);
+    _append(_parentCallback, 2, _rchildCallback);
+    return _parentCallback;
+}
+
 
 function _hasChildren(Callback memory _callback) pure returns (bool) {
     return _callback.children.length > 0;
@@ -108,7 +153,8 @@ function readNest(Callback memory _callback) pure returns (string memory result)
     return _callback.decoded;
 }
 
-using {addToNest, readNest} for Callback global;
+using {addToNest_1, addToNest_2, addToNest_3, readNest} for Callback global;
+
 
 /* HTML STRUCTURE OPERATIONS */
 function read(html memory _html) pure returns (string memory) {

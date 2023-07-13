@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {LibString, ExtLibString} from "../utils/ExtLibString.sol";
+import {LibString} from "lib/solady/src/Milady.sol";
 
 struct fn {
     string _function;
