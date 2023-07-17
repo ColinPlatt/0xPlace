@@ -7,7 +7,6 @@ import {libBrowserProvider, libJsonRPCProvider} from "./utils/libBrowserProvider
 import {LibString} from "lib/solady/src/Milady.sol";
 import {Base64} from "lib/solady/src/utils/Base64.sol";
 import {HTML} from "./utils/HTML.sol";
-import {PlaceCSS} from "./PlaceCSS.sol";
 
 contract UIProvider {
     using HTML for string;
@@ -19,14 +18,7 @@ contract UIProvider {
         placeScripts = new PlaceScripts();
     }
 
-    function _iframFallback(html memory _page) internal pure {
-        _page.appendBody(
-            '<div class="iframe-fallback"><div class="arrow"></div><span class="body">Please click "View Original Media"</span><span class="material-icons-outlined">open_in_new</span><span class="body">to enable Web3 features</span></div>'
-        );
-    }
-
     function _getBody(html memory _page, bytes memory _pixels) internal view {
-        PlaceBody._getHeaderBar(_page);
         PlaceBody._getInfoDiv(_page);
         PlaceBody._getContainer(_page);
         _page.script_(placeScripts._getScripts(_pixels));
@@ -47,34 +39,147 @@ contract UIProvider {
     }
 }
 
+// we place the elements in a separate contracts to avoid the spurious dragon
+
+contract PlaceCSS {
+    using HTML for string;
+
+    function _getButtonCSS(css memory _style) private pure {
+        _style.addCSSElement(
+            "button",
+            string.concat(
+                string("height").cssDecl("2.25rem"),
+                string("cursor").cssDecl("pointer"),
+                string("background").cssDecl("#027cfd"),
+                string("font-family").cssDecl("inherit"),
+                string("padding").cssDecl("0.25rem 1rem"),
+                string("color").cssDecl("white"),
+                string("margin").cssDecl("1rem 1rem 0"),
+                string("font-size").cssDecl("1rem"),
+                string("border-radius").cssDecl("7px")
+            )
+        );
+    }
+
+    function _getMainCSS(css memory _style) private pure {
+        _style.addCSSElement(
+            "body",
+            string.concat(
+                string("background-color").cssDecl("#0f1316"),
+                string("color").cssDecl("#fff"),
+                string("font-family").cssDecl("'Courier New', Courier, monospace"),
+                string("padding").cssDecl("0.25rem 1rem")
+            )
+        );
+
+        _style.addCSSElement(
+            "input",
+            string.concat(
+                string("background").cssDecl("transparent"),
+                string("width").cssDecl("5rem"),
+                string("margin").cssDecl("1rem 1rem 0")
+            )
+        );
+
+        _getButtonCSS(_style);
+
+        _style.addCSSElement(
+            'input[type="color"]',
+            string.concat(
+                string("height").cssDecl("2rem"),
+                string("padding").cssDecl("0"),
+                string("background").cssDecl("transparent !important"),
+                string("border-radius").cssDecl("10px"),
+                string("position").cssDecl("relative"),
+                string("border").cssDecl("none"),
+                string("cursor").cssDecl("pointer")
+            )
+        );
+    }
+
+    function _getCanvasCSS(css memory _style) private pure {
+        _style.addCSSElement(
+            "#pixel-art-area",
+            string.concat(
+                string("display").cssDecl("flex"),
+                string("flex-direction").cssDecl("row"),
+                string("flex-wrap").cssDecl("wrap"),
+                string("overflow").cssDecl("hidden"),
+                string("border-radius").cssDecl("4px"),
+                string("padding").cssDecl("0.05px")
+            )
+        );
+
+        _style.addCSSElement("#pixel-art-area input", string.concat(string("background").cssDecl("#101316")));
+
+        _style.addCSSElement(
+            "#canvas-area",
+            string.concat(string("position").cssDecl("relative"), string("border").cssDecl("5px solid #b9b9b9"))
+        );
+
+        _style.addCSSElement(
+            ".cursor-highlight",
+            string.concat(
+                string("position").cssDecl("absolute"),
+                string("background-color").cssDecl("rgba(255, 255, 255, 0.3)"),
+                string("border").cssDecl("1px solid white"),
+                string("pointer-events").cssDecl("none")
+            )
+        );
+    }
+
+    function _getCSS() public pure returns (string memory) {
+        css memory style;
+
+        _getMainCSS(style);
+
+        _getCanvasCSS(style);
+
+        style.addCSSElement(
+            "#button-container",
+            string.concat(
+                string("display").cssDecl("flex"),
+                string("justify-content").cssDecl("space-between"),
+                string("align-items").cssDecl("center"),
+                string("max-width").cssDecl("400px"),
+                string("margin-bottom").cssDecl("1rem")
+            )
+        );
+
+        style.addCSSElement(
+            "#pixel-art-options",
+            string.concat(string("display").cssDecl("flex"), string("align-items").cssDecl("center"))
+        );
+
+        style.addCSSElement(
+            "#color-selector-container",
+            string.concat(
+                string("display").cssDecl("flex"),
+                string("width").cssDecl("20rem"),
+                string("position").cssDecl("relative"),
+                string("align-items").cssDecl("center")
+            )
+        );
+
+        return style.readCSS();
+    }
+}
+
 library PlaceBody {
     using HTML for string;
     using nestDispatcher for Callback;
     using nestDispatcher for string;
 
-
-    function _getHeaderBar(html memory _page) internal pure {
-        _page.appendBody(
-            string("id").prop("header-bar").callBackbuilder('', HTML.div, 2).addToNest(
-                string("class").prop("title").callBackbuilder('0xPlace', HTML.div, 0),
-                string("class").prop("top-right").callBackbuilder('', HTML.div, 3).addToNest(
-                    string("class").prop("dot").callBackbuilder('', HTML.div, 0),
-                    string("class").prop("connect-button").callBackbuilder('Connect Wallet', HTML.button, 0),
-                    string("class").prop("switch-button").callBackbuilder('Switch Networks', HTML.button, 0)
-                )
-            ).readNest()
-        );
-    }
-
     function _getInfoDiv(html memory _page) internal pure {
-        childCallback_ memory infoChildren;
+        childCallback_[] memory infoChildren = new childCallback_[](2);
 
-        infoChildren = childCallback_(
+        infoChildren[0] = childCallback_("0xPlace", HTML.h2_);
+        infoChildren[1] = childCallback_(
             "0xPlace is an entirely onchain canvas that let\'s users claim and update pixels. When a pixel is first claimed (0.0001 ETH each), the user receives 100 $PLACE tokens. Each change requires 1 $PLACE token which is paid to the current owner of the pixel.",
             HTML.p_
         );
 
-        _page.divChild_(string("id").prop("info"), infoChildren);
+        _page.divChildren_(string("id").prop("info"), infoChildren);
     }
 
     function _getContainer(html memory _page) internal pure {
@@ -103,10 +208,6 @@ library PlaceBody {
         );
     }
 }
-
-// we place the elements in a separate contracts to avoid the spurious dragon
-
-
 
 contract PlaceScripts {
     using HTML for string;
@@ -191,7 +292,6 @@ contract PlaceScripts {
                 )
             )
         );
-        _drawGridFn.appendArrowFn('pixelArtArea.appendChild(state.canvasArea);');
         _drawGridFn.closeBodyArrowFn();
         _drawGridFn.appendArrowFn("drawGrid();");
 
@@ -210,7 +310,6 @@ contract PlaceScripts {
                 "i",
                 "pixelSize",
                 string.concat(
-                    'let pixelExists = false;',
                     _forLoop(
                         "j",
                         "state.currentStep.changes.length",
@@ -284,11 +383,13 @@ contract PlaceScripts {
         arrowFn memory _hexToRgbFn;
 
         _hexToRgbFn.initializeNamedArgsArrowFn(ArrowFn.Const, "hexToRgb", "hex");
+        _hexToRgbFn.openBodyArrowFn();
         _hexToRgbFn.appendArrowFn(
             string.concat(
                 "hex.slice(1).replace(/^(.)(.)(.)$/gi, '$1$1$2$2$3$3').match(/.{2}/g).map((c) => parseInt(c, 16));"
             )
         );
+        _hexToRgbFn.closeBodyArrowFn();
 
         _script.scriptContent = LibString.concat(_script.scriptContent, _hexToRgbFn.readArrowFn());
     }
@@ -297,9 +398,11 @@ contract PlaceScripts {
         arrowFn memory _distanceFn;
 
         _distanceFn.initializeNamedArgsArrowFn(ArrowFn.Const, "distance", "a, b");
+        _distanceFn.openBodyArrowFn();
         _distanceFn.appendArrowFn(
             string.concat("Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2) + Math.pow(a[2] - b[2], 2));")
         );
+        _distanceFn.closeBodyArrowFn();
 
         _script.scriptContent = LibString.concat(_script.scriptContent, _distanceFn.readArrowFn());
     }
@@ -308,12 +411,14 @@ contract PlaceScripts {
         arrowFn memory _nearestColorFn;
 
         _nearestColorFn.initializeNamedArgsArrowFn(ArrowFn.Const, "nearestColor", "colorHex");
+        _nearestColorFn.openBodyArrowFn();
         _nearestColorFn.appendArrowFn(
             "state.colors.reduce((a, v, i, arr) => (a = distance(hexToRgb(colorHex), hexToRgb(v)) < a[0] ? ["
         );
         _nearestColorFn.appendArrowFn(
             "distance(hexToRgb(colorHex), hexToRgb(v)), v ] : a), [Number.POSITIVE_INFINITY, state.colors[0]])[1];"
         );
+        _nearestColorFn.closeBodyArrowFn();
 
         _script.scriptContent = LibString.concat(_script.scriptContent, _nearestColorFn.readArrowFn());
     }
@@ -381,7 +486,7 @@ contract PlaceScripts {
         _getDeltaFn.closeBodyFn();
 
         _script.scriptContent = string.concat(
-            _script.scriptContent, "mintButton.addEventListener('click', drawGrid());", _getDeltaFn.readFn()
+            _script.scriptContent, "mintButton.addEventListener('click', getDelta);", _getDeltaFn.readFn()
         );
     }
 

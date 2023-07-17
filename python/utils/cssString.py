@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 
+
 with open('../test/output/renderedSite_testing.html', 'r') as f:
     contents = f.read()
 

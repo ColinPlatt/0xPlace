@@ -19,7 +19,7 @@ app = Flask(__name__, static_folder=ABSOLUTE_OUTPUT_DIR_PATH)
 
 @app.route('/')
 def home():
-    return send_from_directory(app.static_folder, 'renderedSite.html')
+    return send_from_directory(app.static_folder, HTML_OUTPUT_FILE)
 
 if __name__ == "__main__":
     app.run(port=8000, debug=True)

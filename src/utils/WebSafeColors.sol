@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-contract WebSafeColors {
-    function writeColors() public pure returns (bytes memory) {
+library WebSafeColors {
+    function writeColors() internal pure returns (bytes memory) {
         bytes memory _webSafeColors = new bytes(216*3);
 
         bytes1[6] memory colors = [bytes1(0x00), bytes1(0x33), bytes1(0x66), bytes1(0x99), bytes1(0xCC), bytes1(0xFF)];
