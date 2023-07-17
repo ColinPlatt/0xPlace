@@ -14,6 +14,9 @@ contract UIProvider {
     PlaceCSS public placeCSS;
     PlaceScripts public placeScripts;
 
+    address public constant PLACE_ADDRESS = 0x1dC05fBf9db32e909889859C9192aFD2B30Fa814;
+    address public constant PLACE_TOKEN = 0xD8916482B847eE55e7467B2C13587D1551Ed987d;
+
     constructor() {
         placeCSS = new PlaceCSS();
         placeScripts = new PlaceScripts();
@@ -25,6 +28,10 @@ contract UIProvider {
         PlaceBody._getContainer(_page);
         _page.appendBody(ethersConnection.iframeFallback());
         _page.script_(ethersConnection.connectionLogic('web3-container'));
+        _page.script_(string.concat(
+            'const ZEROxPLACE = "', LibString.toHexString(PLACE_ADDRESS), '"; ',
+            'const PLACE_TOKEN = "', LibString.toHexString(PLACE_TOKEN), '";'
+        ));
         _page.script_(placeScripts._getScripts(_pixels));
     }
 
@@ -62,7 +69,7 @@ library PlaceBody {
         childCallback_ memory infoChildren;
 
         infoChildren = childCallback_(
-            "0xPlace is an entirely onchain canvas that let\'s users claim and update pixels. When a pixel is first claimed (0.0001 ETH each), the user receives 100 $PLACE tokens. Each change requires 1 $PLACE token which is paid to the current owner of the pixel.",
+            "0xPlace is an entirely onchain canvas that lets users claim and update pixels. When a pixel is first claimed (0.0001 ETH each), the user receives 1000 $PLACE tokens. Each change requires 1 $PLACE token which is paid to the current owner of the pixel.",
             HTML.p_
         );
 
@@ -168,6 +175,7 @@ library ethersConnection {
 
 
 contract PlaceScripts {
+
     using HTML for string;
 
     struct script {

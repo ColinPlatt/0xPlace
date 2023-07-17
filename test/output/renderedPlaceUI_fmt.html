@@ -203,6 +203,10 @@
             });
         </script>
         <script>
+            const ZEROxPLACE = "0x1dc05fbf9db32e909889859c9192afd2b30fa814";
+            const PLACE_TOKEN = "0xd8916482b847ee55e7467b2c13587d1551ed987d";
+        </script>
+        <script>
             let state = {
                 config: {
                     width: 1024,
@@ -249,7 +253,6 @@
             for (let i = 0; i < colorPalette.length; i += 6) {
                 state.colors.push('#' + colorPalette.slice(i, i + 6));
             }
-            
             const setColors = () => {
                 const currentPixels = "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c";
                 for (let i = 0; i < currentPixels.length; i++) {
