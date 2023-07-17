@@ -61,7 +61,7 @@ contract zeroxPlace is IURIProvider, Ownable {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     function read() external view override returns (string memory) {
-        return "https://0xplace.com/api/";
+        return uiProvider.renderUI(canvas);
     }
 
     // the user can claim pixels, and receive 100 PLACE tokens per pixel claimed
@@ -71,13 +71,13 @@ contract zeroxPlace is IURIProvider, Ownable {
 
         canvas.push(0x00); // create a new pixel
         pixelOwner[canvas.length - 1] = msg.sender; // set the owner of the pixel
-        token.transfer(msg.sender, 100 * 1e18); // transfer 100 PLACE tokens to the user
+        token.transfer(msg.sender, 1000 * 1e18); // transfer 100 PLACE tokens to the user
     }
 
     // multiclaim for pixels, with 100 pixel limit
     function claimPixel(uint256 number) public payable {
         if (canvas.length == MAX_PIXELS) revert CLAIMED();
-        if (number > 100) revert LIMIT_EXCEEDED();
+        if (number > 10_000) revert LIMIT_EXCEEDED();
         if (msg.value != 0.0001 ether * number) revert INSUFFICIENT_PAYMENT();
         uint256 _number;
         if (canvas.length + number > MAX_PIXELS) {
@@ -93,7 +93,7 @@ contract zeroxPlace is IURIProvider, Ownable {
             }
         }
 
-        token.transfer(msg.sender, _number * 100 * 1e18);
+        token.transfer(msg.sender, _number * 1000 * 1e18);
     }
 
     function draw(uint256 index, uint8 color) public {
