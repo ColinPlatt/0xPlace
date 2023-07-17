@@ -19,16 +19,12 @@ contract UIProvider {
         placeScripts = new PlaceScripts();
     }
 
-    function _iframFallback(html memory _page) internal pure {
-        _page.appendBody(
-            '<div class="iframe-fallback"><div class="arrow"></div><span class="body">Please click "View Original Media"</span><span class="material-icons-outlined">open_in_new</span><span class="body">to enable Web3 features</span></div>'
-        );
-    }
-
     function _getBody(html memory _page, bytes memory _pixels) internal view {
         PlaceBody._getHeaderBar(_page);
-        PlaceBody._getInfoDiv(_page);
+        PlaceBody._getInfoDiv(_page);    
         PlaceBody._getContainer(_page);
+        _page.appendBody(ethersConnection.iframeFallback());
+        _page.script_(ethersConnection.connectionLogic('web3-container'));
         _page.script_(placeScripts._getScripts(_pixels));
     }
 
@@ -57,11 +53,7 @@ library PlaceBody {
         _page.appendBody(
             string("id").prop("header-bar").callBackbuilder('', HTML.div, 2).addToNest(
                 string("class").prop("title").callBackbuilder('0xPlace', HTML.div, 0),
-                string("class").prop("top-right").callBackbuilder('', HTML.div, 3).addToNest(
-                    string("class").prop("dot").callBackbuilder('', HTML.div, 0),
-                    string("class").prop("connect-button").callBackbuilder('Connect Wallet', HTML.button, 0),
-                    string("class").prop("switch-button").callBackbuilder('Switch Networks', HTML.button, 0)
-                )
+                ethersConnection.walletButtons()
             ).readNest()
         );
     }
@@ -79,7 +71,7 @@ library PlaceBody {
 
     function _getContainer(html memory _page) internal pure {
         _page.appendBody(
-            string("id").prop("container").callBackbuilder('', HTML.div, 2).addToNest(
+            string("id").prop("web3-container").callBackbuilder('', HTML.div, 2).addToNest(
                 string("id").prop("button-container").callBackbuilder('', HTML.div, 1).addToNest(
                     string("id").prop("pixel-art-options").callBackbuilder('', HTML.div, 4).addToNest(
                         string("id").prop("update-btn").callBackbuilder("Update", HTML.button, 0),
@@ -106,6 +98,73 @@ library PlaceBody {
 
 // we place the elements in a separate contracts to avoid the spurious dragon
 
+library ethersConnection {
+    using HTML for string;
+
+    function iframeFallback() internal pure returns (string memory) {
+        return '<div class="iframe-fallback"><span class="body">Please open original media to enable Web3 features</span></div>';
+    }
+
+    function walletButtons() internal pure returns (Callback memory walletBtns) {
+        walletBtns.decoded = '<div class="top-right"><div class="dot"></div><button class="connect-button">Connect Wallet</button><button class="switch-button">Switch Networks</button></div>';
+    }
+
+    struct ChainInfo{
+        string chainName;
+        string chainId;
+        string rpcUrl;
+        string blockExplorer;
+        string nativeCurrencyName;
+        string nativeCurrencySymbol;
+        string nativeCurrencyDecimals;
+    }
+
+    function _chainInfoToString(ChainInfo memory _chainInfo) private pure returns (string memory) {
+        return string.concat(
+            '{ chainId: "', 
+                _chainInfo.chainId, 
+                '", chainName: "', 
+                _chainInfo.chainName, 
+                '", rpcUrls: ["', 
+                _chainInfo.rpcUrl, 
+                '"], blockExplorerUrls: ["', 
+                _chainInfo.blockExplorer, 
+                '"], nativeCurrency: { name: "',
+                     _chainInfo.nativeCurrencyName, 
+                     '", symbol: "', 
+                     _chainInfo.nativeCurrencySymbol, 
+                     '", decimals: ', 
+                     _chainInfo.nativeCurrencyDecimals,
+            ' } }'
+        );
+    }
+
+    function connectionLogic(string memory web3Container) internal view returns (string memory) {
+
+        ChainInfo memory _chainInfo = ChainInfo(
+            "Goerli",
+            "0x5", //LibString.toMinimalHexString(block.chainid),
+            "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+            "https://goerli.etherscan.io/",
+            "Goerli ETH",
+            "ETH",
+            "18"
+        );
+
+        return string.concat(
+            'let provider = {account: void 0, isConnected: !1, error: null}; let accounts; function setDotColor(e) {document.querySelector(".dot").style.backgroundColor = e} document.addEventListener("DOMContentLoaded", function () {if (window == window.top) {var e = document.getElementById("',
+            web3Container,
+            '"),t = document.querySelector(".connect-button"), n = document.querySelector(".switch-button"); e.style.display = "block",',
+            'void 0 !== window.ethereum ? (window.ethereum.request({method: "eth_requestAccounts"}), ethereum.request({method: "eth_accounts"}).then(function (accounts) {accounts.length === 0 ? (setDotColor("red"), t.style.display = "block", n.style.display = "none", provider = { account: undefined, isConnected: false, error: "wallet not detected"}) : ethereum.request({method: "eth_chainId"}).then(function (e) {"',
+            _chainInfo.chainId,
+            '" === e ? (setDotColor("green"), t.style.display = "none", n.style.display = "none", provider = { account: accounts[0], isConnected: true, error: null}, console.log(provider)) : (setDotColor("red"), t.style.display = "none", n.style.display = "block", provider = { account: undefined, isConnected: false, error: "no address connected"})}).catch(console.error)',
+            '}).catch(console.error), t.addEventListener("click", function () {ethereum.request({method: "eth_requestAccounts"}).then(function (accounts) {accounts.length > 0 && (setDotColor("green"), t.style.display = "none", n.style.display = "none", provider = { account: accounts[0], isConnected: true, error: null})}).catch(console.error)}), n.addEventListener("click", function () {window.ethereum.request({ method: "wallet_addEthereumChain", params: [',
+            _chainInfoToString(_chainInfo),
+            ']}).then(function () {n.style.display = "none"; setDotColor("green")}).catch(console.error)})) : (setDotColor("red"), t.style.display = "block", n.style.display = "none")',
+            '} else {document.querySelector(".iframe-fallback").style.display = "block"}});'
+        );
+    } 
+}
 
 
 contract PlaceScripts {

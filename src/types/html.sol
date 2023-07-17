@@ -155,7 +155,9 @@ function _getDecodeFnResult(Callback memory _callback) pure {
     } else if (_callback.inputs.length == 3) {
         _callback.decoded =  FunctionCoder.decode(_callback.callbackFn, _callback.inputs[0], _callback.inputs[1], _callback.inputs[2]);
     } else {
-        _callback.decoded =  "Err: could not decode function result";
+        if(keccak256(bytes(_callback.decoded)) == keccak256(bytes(''))) {
+            _callback.decoded =  "Err: could not decode function result";
+        }
     }
 }
 
