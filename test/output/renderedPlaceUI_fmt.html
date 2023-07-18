@@ -119,7 +119,7 @@
             </div>
         </div>
         <div id="info">
-            <p>0xPlace is an entirely onchain canvas that let's users claim and update pixels. When a pixel is first claimed (0.0001 ETH each), the user receives 100 $PLACE tokens. Each change requires 1 $PLACE token which is paid to the current owner of the pixel.</p>
+            <p>0xPlace is an entirely onchain canvas that lets users claim and update pixels. When a pixel is first claimed (0.0001 ETH each), the user receives 1000 $PLACE tokens. Each change requires 1 $PLACE token which is paid to the current owner of the pixel.</p>
         </div>
         <div id="web3-container">
             <div id="button-container">
@@ -129,6 +129,7 @@
                     <div id="color-selector-container">
                         <p style="margin:1rem 0.25rem 0;">Select Color</p><input type="color" id="color-picker" value="#ffffff"/></div>
                     <button id="mint-btn">Mint</button>
+                    <button id="color-btn">Color</button>
                 </div>
             </div>
             <div id="pixel-art-area" oncontextmenu="return false;"></div>
@@ -137,44 +138,47 @@
             <span class="body">Please open original media to enable Web3 features</span>
         </div>
         <script>
-            let provider = {
-                account: void 0,
-                isConnected: !1,
-                error: null
-            };
+            let isIframe;
+            let provider;
             let accounts;
+            let connectedAccount;
             function setDotColor(e) {
                 document.querySelector(".dot").style.backgroundColor = e
             }
             document.addEventListener("DOMContentLoaded", function () {
                 if (window == window.top) {
-                    var e = document.getElementById("web3-container"),
+                    provider = window.ethereum;
+                    isIframe = false;
+                    var e = document.getElementById("web3-container", document.querySelector(".iframe-fallback").style.display = "none"),
                         t = document.querySelector(".connect-button"),
                         n = document.querySelector(".switch-button");
                     e.style.display = "block",
-                    void 0 !== window.ethereum ? (window.ethereum.request({method: "eth_requestAccounts"}), ethereum.request({method: "eth_accounts"}).then(function (accounts) {
-                        accounts.length === 0 ? (setDotColor("red"), t.style.display = "block", n.style.display = "none", provider =
-                            { account: undefined,
-                            isConnected: false,
-                            error: "wallet not detected"
-                        }) : ethereum.request({method: "eth_chainId"}).then(function (e) {
-                            "0x5" === e ? (setDotColor("green"), t.style.display = "none", n.style.display = "none", provider =
-                                { account: accounts[0],
-                                isConnected: true,
-                                error: null
-                            }, console.log(provider)) : (setDotColor("red"), t.style.display = "none", n.style.display = "block", provider =
-                                { account: undefined,
-                                isConnected: false,
-                                error: "no address connected"
-                            })
+                    void 0 !== provider ? (window.ethereum.request({method: "eth_requestAccounts"}), ethereum.request({method: "eth_accounts"}).then(function (accounts) {
+                        accounts.length === 0 ? (setDotColor("red"), t.style.display = "block", n.style.display = "none") : ethereum.request({method: "eth_chainId"}).then(function (e) {
+                            if("0x5" === e) { (ethereum.enable().then(function (accounts) {
+                                    setDotColor("green");
+                                    console.log(accounts);
+                                    connectedAccount = accounts[0];
+                                    n.style.display = "none";
+                                    t.innerText = "Connected";
+                                }).catch(console.error))} else {(setDotColor("red"), t.style.display = "none", n.style.display = "block")}
                         }).catch(console.error)
                     }).catch(console.error), t.addEventListener("click", function () {
                         ethereum.request({method: "eth_requestAccounts"}).then(function (accounts) {
-                            accounts.length > 0 && (setDotColor("green"), t.style.display = "none", n.style.display = "none", provider =
-                                { account: accounts[0],
-                                isConnected: true,
-                                error: null
-                            })
+                            if (accounts.length > 0) {
+                                setDotColor("green");
+                                t.innerText = "Connected";
+                                n.style.display = "none";
+                                connectedAccount = accounts[0];
+                            } else {
+                                ethereum.enable().then(function (accounts) {
+                                    setDotColor("green");
+                                    console.log(accounts);
+                                    connectedAccount = accounts[0];
+                                    n.style.display = "none";
+                                    t.innerText = "Connected";
+                                }).catch(console.error);
+                            }
                         }).catch(console.error)
                     }), n.addEventListener("click", function () {
                         window.ethereum.request({
@@ -198,7 +202,9 @@
                         }).catch(console.error)
                     })) : (setDotColor("red"), t.style.display = "block", n.style.display = "none")
                 } else {
-                    document.querySelector(".iframe-fallback").style.display = "block"
+                    document.querySelector(".iframe-fallback").style.display = "block";
+                    document.getElementById("web3-container").style.display = "none",
+                    isIframe = true;
                 }
             });
         </script>
@@ -260,6 +266,9 @@
                 }
             };
             const drawGrid = () => {
+                if (isIframe) 
+                    return;
+                
                 state.context.strokeStyle = 'gray';
                 state.context.lineWidth = 0.1;
                 for (let x = 0; x <= state.canvasArea.width; x += state.gridSize) {

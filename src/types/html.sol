@@ -28,6 +28,17 @@ library nestDispatcher {
         return _parentCallback.addToNest_4(_1childCallback, _2childCallback, _3childCallback, _4childCallback);
     }
 
+    function addToNest(
+        Callback memory _parentCallback, 
+        Callback memory _1childCallback, 
+        Callback memory _2childCallback, 
+        Callback memory _3childCallback,
+        Callback memory _4childCallback,
+        Callback memory _5childCallback
+    ) internal pure returns (Callback memory) {
+        return _parentCallback.addToNest_5(_1childCallback, _2childCallback, _3childCallback, _4childCallback, _5childCallback);
+    }
+
 
     function callBackbuilder(
         string memory _props, 
@@ -141,6 +152,22 @@ function addToNest_4(
     return _parentCallback;
 }
 
+function addToNest_5(
+    Callback memory _parentCallback, 
+    Callback memory _1childCallback,
+    Callback memory _2childCallback, 
+    Callback memory _3childCallback,
+    Callback memory _4childCallback,
+    Callback memory _5childCallback
+) pure returns (Callback memory) {
+    _append(_parentCallback, 0, _1childCallback);
+    _append(_parentCallback, 1, _2childCallback);
+    _append(_parentCallback, 2, _3childCallback);
+    _append(_parentCallback, 3, _4childCallback);
+    _append(_parentCallback, 4, _5childCallback);
+    return _parentCallback;
+}
+
 
 function _hasChildren(Callback memory _callback) pure returns (bool) {
     return _callback.children.length > 0;
@@ -216,7 +243,7 @@ function readNest(Callback memory _callback) pure returns (string memory result)
     return _callback.decoded;
 }
 
-using {addToNest_1, addToNest_2, addToNest_3, addToNest_4, readNest} for Callback global;
+using {addToNest_1, addToNest_2, addToNest_3, addToNest_4, addToNest_5, readNest} for Callback global;
 
 
 /* HTML STRUCTURE OPERATIONS */

@@ -171,6 +171,19 @@ library libJsonRPCProvider {
     function eth_call(Transaction memory _transaction, uint256 _blockNumber) internal pure returns (string memory) {
         return _request("eth_call", string.concat(_transaction.read(), ',"', _blockNumber.toHexString(), '"'));
     }
+
+    function eth_call(string memory _transaction, uint256 _blockNumber) internal pure returns (string memory) {
+        return _request("eth_call", string.concat(_transaction, ',"', _blockNumber.toHexString(), '"'));
+    }
+
+    function eth_call(Transaction memory _transaction, blockTag _blockTag) internal pure returns (string memory) {
+        return _request("eth_call", string.concat(_transaction.read(), ',"', _blockTagToString(_blockTag), '"'));
+    }
+
+    function eth_call(string memory _transaction, blockTag _blockTag) internal pure returns (string memory) {
+        return _request("eth_call", string.concat(_transaction, ',"', _blockTagToString(_blockTag), '"'));
+    }
+
     //@todo by block tag
 
     //eth_estimateGas

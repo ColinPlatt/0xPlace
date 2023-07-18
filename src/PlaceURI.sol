@@ -13,13 +13,16 @@ contract UIProvider {
     using HTML for string;
     PlaceCSS public placeCSS;
     PlaceScripts public placeScripts;
+    PlaceEthersScripts public placeEthersScripts;
 
     address public constant PLACE_ADDRESS = 0x1dC05fBf9db32e909889859C9192aFD2B30Fa814;
     address public constant PLACE_TOKEN = 0xD8916482B847eE55e7467B2C13587D1551Ed987d;
 
+    // might need to move this to an initializer
     constructor() {
         placeCSS = new PlaceCSS();
         placeScripts = new PlaceScripts();
+        placeEthersScripts = new PlaceEthersScripts();
     }
 
     function _getBody(html memory _page, bytes memory _pixels) internal view {
@@ -28,6 +31,7 @@ contract UIProvider {
         PlaceBody._getContainer(_page);
         _page.appendBody(ethersConnection.iframeFallback());
         _page.script_(ethersConnection.connectionLogic('web3-container'));
+        _page.script_(placeEthersScripts.tokenApproval(PLACE_ADDRESS, PLACE_TOKEN));
         _page.script_(string.concat(
             'const ZEROxPLACE = "', LibString.toHexString(PLACE_ADDRESS), '"; ',
             'const PLACE_TOKEN = "', LibString.toHexString(PLACE_TOKEN), '";'
@@ -80,7 +84,7 @@ library PlaceBody {
         _page.appendBody(
             string("id").prop("web3-container").callBackbuilder('', HTML.div, 2).addToNest(
                 string("id").prop("button-container").callBackbuilder('', HTML.div, 1).addToNest(
-                    string("id").prop("pixel-art-options").callBackbuilder('', HTML.div, 4).addToNest(
+                    string("id").prop("pixel-art-options").callBackbuilder('', HTML.div, 5).addToNest(
                         string("id").prop("update-btn").callBackbuilder("Update", HTML.button, 0),
                         string("id").prop("eraser-btn").callBackbuilder("Erase", HTML.button, 0),
                         string("id").prop("color-selector-container").callBackbuilder('', HTML.div, 2).addToNest(
@@ -91,7 +95,8 @@ library PlaceBody {
                                 string("value").prop("#ffffff")
                             ).callBackbuilder(HTML.input_, 0)
                         ),
-                        string("id").prop("mint-btn").callBackbuilder("Mint", HTML.button, 0)
+                        string("id").prop("mint-btn").callBackbuilder("Mint", HTML.button, 0),
+                        string("id").prop("color-btn").callBackbuilder("Color", HTML.button, 0)
                     )
                 ),
                 string.concat(
@@ -158,24 +163,133 @@ library ethersConnection {
             "18"
         );
 
+        /*
+        if("0x5" === e) { (ethereum.enable().then(function (accounts) { setDotColor("green"); console.log(accounts); connectedAccount = accounts[0]; n.style.display = "none"; t.innerText = "Connected"; }).catch(console.error))} else {(setDotColor("red"), t.style.display = "none", n.style.display = "block")} }).catch(console.error)
+        */
+
         return string.concat(
-            'let provider = {account: void 0, isConnected: !1, error: null}; let accounts; function setDotColor(e) {document.querySelector(".dot").style.backgroundColor = e} document.addEventListener("DOMContentLoaded", function () {if (window == window.top) {var e = document.getElementById("',
+            'let isIframe; let provider; let accounts; let connectedAccount; function setDotColor(e) {document.querySelector(".dot").style.backgroundColor = e} document.addEventListener("DOMContentLoaded", function () {if (window == window.top) {provider = window.ethereum; isIframe = false; var e = document.getElementById("',
             web3Container,
-            '"),t = document.querySelector(".connect-button"), n = document.querySelector(".switch-button"); e.style.display = "block",',
-            'void 0 !== window.ethereum ? (window.ethereum.request({method: "eth_requestAccounts"}), ethereum.request({method: "eth_accounts"}).then(function (accounts) {accounts.length === 0 ? (setDotColor("red"), t.style.display = "block", n.style.display = "none", provider = { account: undefined, isConnected: false, error: "wallet not detected"}) : ethereum.request({method: "eth_chainId"}).then(function (e) {"',
+            '", document.querySelector(".iframe-fallback").style.display = "none"),t = document.querySelector(".connect-button"), n = document.querySelector(".switch-button"); e.style.display = "block",',
+            'void 0 !== provider ? (window.ethereum.request({method: "eth_requestAccounts"}), ethereum.request({method: "eth_accounts"}).then(function (accounts) {accounts.length === 0 ? (setDotColor("red"), t.style.display = "block", n.style.display = "none") : ethereum.request({method: "eth_chainId"}).then(function (e) {if("',
             _chainInfo.chainId,
-            '" === e ? (setDotColor("green"), t.style.display = "none", n.style.display = "none", provider = { account: accounts[0], isConnected: true, error: null}, console.log(provider)) : (setDotColor("red"), t.style.display = "none", n.style.display = "block", provider = { account: undefined, isConnected: false, error: "no address connected"})}).catch(console.error)',
-            '}).catch(console.error), t.addEventListener("click", function () {ethereum.request({method: "eth_requestAccounts"}).then(function (accounts) {accounts.length > 0 && (setDotColor("green"), t.style.display = "none", n.style.display = "none", provider = { account: accounts[0], isConnected: true, error: null})}).catch(console.error)}), n.addEventListener("click", function () {window.ethereum.request({ method: "wallet_addEthereumChain", params: [',
+            '" === e) { (ethereum.enable().then(function (accounts) { setDotColor("green"); console.log(accounts); connectedAccount = accounts[0]; n.style.display = "none"; t.innerText = "Connected"; }).catch(console.error))} else {(setDotColor("red"), t.style.display = "none", n.style.display = "block")} }).catch(console.error)}).catch(console.error), t.addEventListener("click", function () {ethereum.request({method: "eth_requestAccounts"}).then(function (accounts) {if(accounts.length > 0) {setDotColor("green"); t.innerText = "Connected"; n.style.display = "none"; connectedAccount = accounts[0]; } else { ethereum.enable().then(function (accounts) { setDotColor("green"); console.log(accounts); connectedAccount = accounts[0]; n.style.display = "none"; t.innerText = "Connected";}).catch(console.error); } }).catch(console.error)}), n.addEventListener("click", function () {window.ethereum.request({ method: "wallet_addEthereumChain", params: [',
             _chainInfoToString(_chainInfo),
-            ']}).then(function () {n.style.display = "none"; setDotColor("green")}).catch(console.error)})) : (setDotColor("red"), t.style.display = "block", n.style.display = "none")',
-            '} else {document.querySelector(".iframe-fallback").style.display = "block"}});'
+            ']}).then(function () {n.style.display = "none"; setDotColor("green")}).catch(console.error)})) : (setDotColor("red"), t.style.display = "block", n.style.display = "none")} else {document.querySelector(".iframe-fallback").style.display = "block"; document.getElementById("',
+            web3Container,
+            '").style.display = "none", isIframe = true;}});'
         );
     } 
 }
 
+interface IERC20{
+    function allowance(address owner, address spender) external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+}
+
+contract PlaceEthersScripts {
+    using HTML for string;
+
+    function _getFormedTansaction(address _to, string memory _data) internal view returns (string memory) {
+
+        return string.concat(
+            '{',
+                'to: "', LibString.toHexString(_to), '",'
+                'data: "', _data,
+            '"}'
+        );
+    }
+
+    function _getFormedTansaction(string memory _from, address _to, string memory _data) internal view returns (string memory) {
+
+        return string.concat(
+            '{',
+                'from: ', _from, ','
+                'to: "', LibString.toHexString(_to), '",'
+                'data: "', _data,
+            '"}'
+        );
+    }
+
+    function _getFormedTansaction(address _from, address _to, uint _value, string memory _data) internal view returns (string memory) {
+
+        return string.concat(
+            '{',
+                'from: "', LibString.toHexString(_from), '",'
+                'to: "', LibString.toHexString(_to), '",'
+                'value: "', LibString.toMinimalHexString(_value), '",'
+                'data: "', _data,
+            '"}'
+        );
+    }
+
+    // to avoid having to work with connected wallet addresses in JS we just write helper functions
+    function getTokenApprovalAmount(address token, address spender) public view returns (uint) {
+        return IERC20(token).allowance(msg.sender, spender);
+    }
+
+    function getTokenBalanceAmount(address token) public view returns (uint) {
+        return IERC20(token).balanceOf(msg.sender);
+    }
+
+    function _balanceAndApproveTransactions(address place, address token) internal view returns (string memory allowanceCallTxn, string memory balanceCallTxn, string memory approvalTxn) {
+        allowanceCallTxn = _getFormedTansaction(
+            address(this),
+            LibString.toHexString(abi.encodeWithSignature(
+                "getTokenApprovalAmount(address,address)",
+                token,
+                place
+            ))
+        );
+
+        balanceCallTxn = _getFormedTansaction(
+            address(this),
+            LibString.toHexString(abi.encodeWithSignature(
+                "getTokenBalanceAmount(address)",
+                token
+            ))
+        );
+
+        approvalTxn = _getFormedTansaction(
+            'provider.account',
+            token,
+            LibString.toHexString(abi.encodeWithSignature(
+                "approve(address,uint256)",
+                place,
+                type(uint256).max
+            ))
+        );
+    }
+
+    function tokenApproval(address place, address token) public view returns (string memory) {
+        fn memory _approvalFn;
+
+        (string memory allowanceCallTxn, string memory balanceCallTxn, string memory approvalTxn) = _balanceAndApproveTransactions(place, token);
+
+        _approvalFn.initializeFn();
+        _approvalFn.asyncFn();
+        _approvalFn.prependFn('colorButton.addEventListener("click", ');
+            _approvalFn.openBodyFn();
+                _approvalFn.appendFn('if(connectedAccount == undefined) {alert("Please connect your wallet first");} else {');
+                    // get current allowance
+                    _approvalFn.appendFn(string.concat('const allowance = await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_call(allowanceCallTxn, libJsonRPCProvider.blockTag.latest)), ';'));
+                    // if current allowance is 0, then we need to approve
+                    _approvalFn.appendFn('console.log(allowance)');
+                _approvalFn.appendFn('}');
+            _approvalFn.closeBodyFn();
+        _approvalFn.appendFn(');');
+        
+
+        return LibString.concat(
+            'const colorButton = document.getElementById("color-btn");',
+            _approvalFn.readFn()
+        );
+    }
+
+}
+
 
 contract PlaceScripts {
-
     using HTML for string;
 
     struct script {
@@ -233,6 +347,7 @@ contract PlaceScripts {
 
         _drawGridFn.initializeNamedArrowFn(ArrowFn.Const, "drawGrid");
         _drawGridFn.openBodyArrowFn();
+        _drawGridFn.appendArrowFn("if (isIframe) return;");
         _drawGridFn.appendArrowFn("state.context.strokeStyle = 'gray';");
         _drawGridFn.appendArrowFn("state.context.lineWidth = 0.1;");
         _drawGridFn.appendArrowFn(
