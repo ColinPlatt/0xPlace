@@ -251,7 +251,7 @@ contract PlaceEthersScripts {
         );
 
         approvalTxn = _getFormedTansaction(
-            'provider.account',
+            'connectedAccount',
             token,
             LibString.toHexString(abi.encodeWithSignature(
                 "approve(address,uint256)",
@@ -274,8 +274,16 @@ contract PlaceEthersScripts {
                     // get current allowance
                     _approvalFn.appendFn(string.concat('const allowance = await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_call(allowanceCallTxn, libJsonRPCProvider.blockTag.latest)), ';'));
                     // if current allowance is 0, then we need to approve
-                    _approvalFn.appendFn('console.log(allowance)');
-                _approvalFn.appendFn('}');
+                    _approvalFn.appendFn('console.log("allowance:", allowance);');
+                    _approvalFn.appendFn('if(allowance == "0x") {');
+                        // get current balance
+                        _approvalFn.appendFn(string.concat('const balance = await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_call(balanceCallTxn, libJsonRPCProvider.blockTag.latest)), ';'));
+                        // if current balance is 0, then we need to approve
+                        _approvalFn.appendFn('console.log("balance:", balance);');
+                        _approvalFn.appendFn('if(balance == "0x") {');
+                            // approve
+                            _approvalFn.appendFn(string.concat('await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_sendTransaction(approvalTxn)), ';'));
+                _approvalFn.appendFn('}}}');
             _approvalFn.closeBodyFn();
         _approvalFn.appendFn(');');
         
