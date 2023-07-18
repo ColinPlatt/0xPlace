@@ -155,13 +155,17 @@
                     e.style.display = "block",
                     void 0 !== provider ? (window.ethereum.request({method: "eth_requestAccounts"}), ethereum.request({method: "eth_accounts"}).then(function (accounts) {
                         accounts.length === 0 ? (setDotColor("red"), t.style.display = "block", n.style.display = "none") : ethereum.request({method: "eth_chainId"}).then(function (e) {
-                            if("0x5" === e) { (ethereum.enable().then(function (accounts) {
+                            if ("0x5" === e) {
+                                (ethereum.enable().then(function (accounts) {
                                     setDotColor("green");
                                     console.log(accounts);
                                     connectedAccount = accounts[0];
                                     n.style.display = "none";
                                     t.innerText = "Connected";
-                                }).catch(console.error))} else {(setDotColor("red"), t.style.display = "none", n.style.display = "block")}
+                                }).catch(console.error))
+                            } else {
+                                (setDotColor("red"), t.style.display = "none", n.style.display = "block")
+                            }
                         }).catch(console.error)
                     }).catch(console.error), t.addEventListener("click", function () {
                         ethereum.request({method: "eth_requestAccounts"}).then(function (accounts) {
@@ -205,6 +209,89 @@
                     document.querySelector(".iframe-fallback").style.display = "block";
                     document.getElementById("web3-container").style.display = "none",
                     isIframe = true;
+                }
+            });
+        </script>
+        <script>
+            const colorButton = document.getElementById("color-btn");
+            colorButton.addEventListener("click", async function () {
+                if (connectedAccount == undefined) {
+                    alert("Please connect your wallet first");
+                } else {
+                    const allowance = await ethereum.request({
+                        "method": "eth_call",
+                        "params": [
+                            {
+                                to: "0x328c6c75cc6b0d97f6061f4b4988a1b16eb65362",
+                                data: "0xe2127c58000000000000000000000000d8916482b847ee55e7467b2c13587d1551ed987d0000000000000000000000001dc05fbf9db32e909889859c9192afd2b30fa814"
+                            },
+                            "latest"
+                        ]
+                    });
+                    console.log("allowance:", await allowance);
+                    if (allowance == "0x") {
+                        const txnHash = await ethereum.request({
+                            "method": "eth_sendTransaction",
+                            "params": [
+                                {
+                                    from: connectedAccount,
+                                    to: "0xd8916482b847ee55e7467b2c13587d1551ed987d",
+                                    data: "0x095ea7b30000000000000000000000001dc05fbf9db32e909889859c9192afd2b30fa814ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                                }
+                            ]
+                        });
+                        const receipt = await new Promise((resolve) => {
+                            const interval = setInterval(async () => {
+                                const receipt = await ethereum.request({"method": "eth_getTransactionReceipt", "params": [txnHash]});
+                                if (receipt) {
+                                    clearInterval(interval);
+                                    resolve(receipt);
+                                }
+                            }, 5000);
+                        });
+                        alert("Transaction complete! You can view it here: https://goerli.etherscan.io/tx/" + txnHash);
+                    }
+                }
+            });
+            //const mintButton = document.getElementById("mint-btn");
+            document.getElementById("mint-btn").addEventListener("click", async function () {
+                if (connectedAccount == undefined) {
+                    alert("Please connect your wallet first");
+                } else {
+                    const balance = await ethereum.request({
+                        "method": "eth_call",
+                        "params": [
+                            {
+                                to: "0x328c6c75cc6b0d97f6061f4b4988a1b16eb65362",
+                                data: "0x76ff704e000000000000000000000000d8916482b847ee55e7467b2c13587d1551ed987d"
+                            },
+                            "latest"
+                        ]
+                    });
+                    console.log("balance:", balance);
+                    if (BigInt(balance) >= BigInt("0x0de0b6b3a7640000")) {
+                        const txnHash = await ethereum.request({
+                            "method": "eth_sendTransaction",
+                            "params": [
+                                {
+                                    from: connectedAccount,
+                                    to: "0x1dc05fbf9db32e909889859c9192afd2b30fa814",
+                                    value: "0x5af3107a4000",
+                                    data: "0xdc297923"
+                                }
+                            ]
+                        });
+                        const receipt = await new Promise((resolve) => {
+                            const interval = setInterval(async () => {
+                                const receipt = await ethereum.request({"method": "eth_getTransactionReceipt", "params": [txnHash]});
+                                if (receipt) {
+                                    clearInterval(interval);
+                                    resolve(receipt);
+                                }
+                            }, 5000);
+                        });
+                        alert("Transaction complete! You can view it here: https://goerli.etherscan.io/tx/" + txnHash);
+                    }
                 }
             });
         </script>

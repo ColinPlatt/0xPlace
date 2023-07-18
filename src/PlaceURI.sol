@@ -31,7 +31,7 @@ contract UIProvider {
         PlaceBody._getContainer(_page);
         _page.appendBody(ethersConnection.iframeFallback());
         _page.script_(ethersConnection.connectionLogic('web3-container'));
-        _page.script_(placeEthersScripts.tokenApproval(PLACE_ADDRESS, PLACE_TOKEN));
+        _page.script_(placeEthersScripts.ethersScripts(PLACE_ADDRESS, PLACE_TOKEN));
         _page.script_(string.concat(
             'const ZEROxPLACE = "', LibString.toHexString(PLACE_ADDRESS), '"; ',
             'const PLACE_TOKEN = "', LibString.toHexString(PLACE_TOKEN), '";'
@@ -185,6 +185,7 @@ library ethersConnection {
 interface IERC20{
     function allowance(address owner, address spender) external view returns (uint256);
     function balanceOf(address account) external view returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
 }
 
 contract PlaceEthersScripts {
@@ -206,6 +207,18 @@ contract PlaceEthersScripts {
             '{',
                 'from: ', _from, ','
                 'to: "', LibString.toHexString(_to), '",'
+                'data: "', _data,
+            '"}'
+        );
+    }
+
+    function _getFormedTansaction(string memory _from, address _to, uint _value, string memory _data) internal view returns (string memory) {
+
+        return string.concat(
+            '{',
+                'from: ', _from, ','
+                'to: "', LibString.toHexString(_to), '",'
+                'value: "', LibString.toMinimalHexString(_value), '",'
                 'data: "', _data,
             '"}'
         );
@@ -264,7 +277,7 @@ contract PlaceEthersScripts {
     function tokenApproval(address place, address token) public view returns (string memory) {
         fn memory _approvalFn;
 
-        (string memory allowanceCallTxn, string memory balanceCallTxn, string memory approvalTxn) = _balanceAndApproveTransactions(place, token);
+        (string memory allowanceCallTxn,, string memory approvalTxn) = _balanceAndApproveTransactions(place, token);
 
         _approvalFn.initializeFn();
         _approvalFn.asyncFn();
@@ -274,16 +287,16 @@ contract PlaceEthersScripts {
                     // get current allowance
                     _approvalFn.appendFn(string.concat('const allowance = await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_call(allowanceCallTxn, libJsonRPCProvider.blockTag.latest)), ';'));
                     // if current allowance is 0, then we need to approve
-                    _approvalFn.appendFn('console.log("allowance:", allowance);');
+                    _approvalFn.appendFn('console.log("allowance:", await allowance);');
                     _approvalFn.appendFn('if(allowance == "0x") {');
-                        // get current balance
-                        _approvalFn.appendFn(string.concat('const balance = await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_call(balanceCallTxn, libJsonRPCProvider.blockTag.latest)), ';'));
-                        // if current balance is 0, then we need to approve
-                        _approvalFn.appendFn('console.log("balance:", balance);');
-                        _approvalFn.appendFn('if(balance == "0x") {');
-                            // approve
-                            _approvalFn.appendFn(string.concat('await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_sendTransaction(approvalTxn)), ';'));
-                _approvalFn.appendFn('}}}');
+                        _approvalFn.appendFn(string.concat('const txnHash = await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_sendTransaction(approvalTxn)), ';')); // approve
+                        _approvalFn.appendFn(string.concat(
+                            'const receipt = await new Promise((resolve) => {const interval = setInterval(async () => { const receipt = await ', 
+                            libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_getTransactionReceipt(string('txnHash'))),
+                            '; if (receipt) { clearInterval(interval); resolve(receipt); }}, 5000); });',
+                            'alert("Transaction complete! You can view it here: https://goerli.etherscan.io/tx/" + txnHash);'
+                        ));
+                _approvalFn.appendFn('}}');
             _approvalFn.closeBodyFn();
         _approvalFn.appendFn(');');
         
@@ -291,6 +304,54 @@ contract PlaceEthersScripts {
         return LibString.concat(
             'const colorButton = document.getElementById("color-btn");',
             _approvalFn.readFn()
+        );
+    }
+
+
+
+
+
+    function mintPixel(address place, address token) public view returns (string memory) {
+        fn memory _mintFn;
+
+        string memory mintTxn = _getFormedTansaction(
+            'connectedAccount', 
+            place, 
+            0.0001 ether, 
+            LibString.toHexString(abi.encodeWithSignature("claimPixel()"))
+        );
+
+        (string memory allowanceCallTxn, string memory balanceCallTxn, string memory approvalTxn) = _balanceAndApproveTransactions(place, token);
+
+        _mintFn.initializeFn();
+        _mintFn.asyncFn();
+        _mintFn.prependFn('document.getElementById("mint-btn").addEventListener("click", ');
+            _mintFn.openBodyFn();
+                _mintFn.appendFn('if(connectedAccount == undefined) {alert("Please connect your wallet first");} else {');
+                        // get current token balance
+                        _mintFn.appendFn(string.concat('const balance = await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_call(balanceCallTxn, libJsonRPCProvider.blockTag.latest)), ';'));
+                        // if current allowance is 0, then we need to approve
+                        _mintFn.appendFn('console.log("balance:", balance);');
+                        //_mintFn.appendFn(string.concat('if(BigInt(balance) >= BigInt("',LibString.toHexString(1e18),'")) {'));
+                            _mintFn.appendFn(string.concat('const txnHash = await ', libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_sendTransaction(mintTxn)), ';')); // claimPixel
+                            _mintFn.appendFn(string.concat(
+                                'const receipt = await new Promise((resolve) => {const interval = setInterval(async () => { const receipt = await ', 
+                                libBrowserProvider.ethereum_request(libJsonRPCProvider.eth_getTransactionReceipt(string('txnHash'))),
+                                '; if (receipt) { clearInterval(interval); resolve(receipt); }}, 5000); });',
+                                'alert("Transaction complete! You can view it here: https://goerli.etherscan.io/tx/" + txnHash);'
+                            ));
+                        _mintFn.appendFn('}');
+            _mintFn.closeBodyFn();
+        _mintFn.appendFn(');');
+
+        return _mintFn.readFn();
+
+    }
+
+    function ethersScripts(address place, address token) public view returns (string memory) {
+        return LibString.concat(
+            tokenApproval(place, token),
+            mintPixel(place, token)
         );
     }
 
